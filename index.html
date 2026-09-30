@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Look Battle</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    .card {
+      background: #1e1e1e;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      width: 100%;
+      max-width: 320px;
+    }
+    .avatar {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      border: 3px solid #ff4757;
+      margin-bottom: 12px;
+    }
+    h1 { font-size: 22px; margin: 8px 0; }
+    p { color: #a0a0a0; font-size: 14px; }
+    .btn {
+      background: linear-gradient(135deg, #ff4757, #ff6b81);
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 12px;
+      margin-top: 16px;
+      width: 100%;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <img id="user-avatar" class="avatar" src="https://via.placeholder.com/96" alt="Аватар">
+    <h1 id="user-name">Загрузка...</h1>
+    <p>Твой рейтинг привлекательности:</p>
+    <h2 id="user-rating" style="color: #ff4757; font-size: 32px; margin: 4px 0;">1000 ELO</h2>
+    <button class="btn" onclick="alert('Поиск дуэли скоро заработает!')">🔥 ИСКАТЬ ДУЭЛЬ</button>
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+      const user = tg.initDataUnsafe.user;
+      document.getElementById('user-name').innerText = user.first_name || 'Игрок';
+      if (user.photo_url) {
+        document.getElementById('user-avatar').src = user.photo_url;
+      }
+    } else {
+      document.getElementById('user-name').innerText = 'Тестовый Игрок';
+    }
+  </script>
+</body>
+</html>
