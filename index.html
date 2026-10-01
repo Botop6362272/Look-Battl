@@ -6,72 +6,288 @@
   <title>Look Battle</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: #121212;
+      background-color: #0b0c10;
       color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 16px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       min-height: 100vh;
-      margin: 0;
-      padding: 20px;
-      text-align: center;
     }
     .card {
-      background: #1e1e1e;
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      background: #1f2833;
+      border-radius: 20px;
+      padding: 24px 20px;
       width: 100%;
-      max-width: 320px;
+      max-width: 380px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      border: 1px solid #333;
+      position: relative;
+    }
+    .gigachad-glow {
+      border: 2px solid #ffd700 !important;
+      box-shadow: 0 0 25px rgba(255, 215, 0, 0.6) !important;
+    }
+    .avatar-wrapper {
+      position: relative;
+      width: 130px;
+      height: 130px;
+      margin: 0 auto 15px;
     }
     .avatar {
-      width: 96px;
-      height: 96px;
+      width: 100%;
+      height: 100%;
       border-radius: 50%;
-      border: 3px solid #ff4757;
-      margin-bottom: 12px;
+      object-fit: cover;
+      border: 4px solid #45f3ff;
+      background: #0b0c10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
     }
-    h1 { font-size: 22px; margin: 8px 0; }
-    p { color: #a0a0a0; font-size: 14px; }
+    .rank-badge {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: #252a34;
+      display: inline-block;
+      margin-bottom: 8px;
+      color: #45f3ff;
+    }
+    .gigachad-badge {
+      background: linear-gradient(45deg, #ff0055, #ffdd00);
+      color: #000;
+      animation: pulse 1.5s infinite alternate;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.05); }
+    }
+    .elo-display {
+      font-size: 32px;
+      font-weight: 900;
+      color: #ffffff;
+      margin-bottom: 15px;
+    }
+    .elo-val {
+      color: #45f3ff;
+    }
     .btn {
-      background: linear-gradient(135deg, #ff4757, #ff6b81);
-      color: white;
+      background: linear-gradient(135deg, #45f3ff, #ff0055);
       border: none;
-      padding: 14px 28px;
-      font-size: 16px;
-      font-weight: bold;
-      border-radius: 12px;
-      margin-top: 16px;
+      color: white;
+      padding: 16px;
+      border-radius: 14px;
+      font-size: 17px;
+      font-weight: 800;
       width: 100%;
       cursor: pointer;
+      margin-top: 10px;
+      box-shadow: 0 4px 15px rgba(69, 243, 255, 0.3);
+    }
+    .btn:active {
+      transform: scale(0.97);
+    }
+    .btn-secondary {
+      background: #2b2e3a;
+      box-shadow: none;
+      font-size: 15px;
+      color: #ccc;
+    }
+    
+    /* Экран Баттла */
+    .battle-container {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: 100%;
+      max-width: 380px;
+    }
+    .candidate {
+      position: relative;
+      background: #1f2833;
+      border-radius: 18px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .candidate:active {
+      border-color: #ff0055;
+      transform: scale(0.98);
+    }
+    .candidate img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      display: block;
+    }
+    .candidate-info {
+      padding: 12px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+      background: rgba(0,0,0,0.4);
+    }
+    .vs-divider {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 900;
+      color: #ff0055;
+      text-shadow: 0 0 10px rgba(255,0,85,0.5);
+    }
+    .hidden {
+      display: none !important;
+    }
+    input[type="file"] {
+      display: none;
     }
   </style>
 </head>
 <body>
 
-  <div class="card">
-    <img id="user-avatar" class="avatar" src="https://via.placeholder.com/96" alt="Аватар">
-    <h1 id="user-name">Загрузка...</h1>
-    <p>Твой рейтинг привлекательности:</p>
-    <h2 id="user-rating" style="color: #ff4757; font-size: 32px; margin: 4px 0;">1000 ELO</h2>
-    <button class="btn" onclick="alert('Поиск дуэли скоро заработает!')">🔥 ИСКАТЬ ДУЭЛЬ</button>
+  <!-- Экран профиля -->
+  <div id="profile-screen" class="card">
+    <div id="rank-badge" class="rank-badge">🐣 Новичок</div>
+    <div class="avatar-wrapper">
+      <div id="avatar-box" class="avatar">🗿</div>
+    </div>
+    <h2 id="username" style="margin-bottom: 6px;">Игрок</h2>
+    
+    <div class="elo-display"><span id="elo-val" class="elo-val">0</span> <span style="font-size: 18px; color: #888;">ELO</span></div>
+    
+    <label class="btn btn-secondary">
+      📷 Загрузить своё фото
+      <input type="file" id="photo-input" accept="image/*" onchange="uploadPhoto(event)">
+    </label>
+    
+    <button class="btn" onclick="startBattle()">🔥 ИСКАТЬ ДУЭЛЬ</button>
+  </div>
+
+  <!-- Экран голосования (Баттл) -->
+  <div id="battle-screen" class="battle-container hidden">
+    <h3 style="text-align: center; color: #aaa;">Кто выглядит лучше?</h3>
+    
+    <div class="candidate" onclick="vote(1)">
+      <img id="p1-img" src="" alt="Участник 1">
+      <div class="candidate-info" id="p1-name">Участник #1</div>
+    </div>
+
+    <div class="vs-divider">VS</div>
+
+    <div class="candidate" onclick="vote(2)">
+      <img id="p2-img" src="" alt="Участник 2">
+      <div class="candidate-info" id="p2-name">Участник #2</div>
+    </div>
+
+    <button class="btn btn-secondary" onclick="showProfile()">⬅ В профиль</button>
   </div>
 
   <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-      const user = tg.initDataUnsafe.user;
-      document.getElementById('user-name').innerText = user.first_name || 'Игрок';
-      if (user.photo_url) {
-        document.getElementById('user-avatar').src = user.photo_url;
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.expand();
+      if (tg.initDataUnsafe?.user) {
+        document.getElementById('username').innerText = tg.initDataUnsafe.user.first_name;
       }
-    } else {
-      document.getElementById('user-name').innerText = 'Тестовый Игрок';
+    }
+
+    // Старт с 0 ELO
+    let userElo = parseInt(localStorage.getItem('user_elo')) || 0;
+    
+    function updateRankDisplay() {
+      const eloElem = document.getElementById('elo-val');
+      const badgeElem = document.getElementById('rank-badge');
+      const cardElem = document.getElementById('profile-screen');
+      
+      eloElem.innerText = userElo;
+      
+      cardElem.classList.remove('gigachad-glow');
+      badgeElem.classList.remove('gigachad-badge');
+
+      if (userElo >= 3000) {
+        badgeElem.innerText = '🗿 МЕГА ГИГАЧАД';
+        badgeElem.classList.add('gigachad-badge');
+        cardElem.classList.add('gigachad-glow');
+        eloElem.style.color = '#ffd700';
+      } else if (userElo >= 2000) {
+        badgeElem.innerText = '🔥 Легенда';
+        eloElem.style.color = '#ff0055';
+      } else if (userElo >= 1000) {
+        badgeElem.innerText = '⚡ Гигачад';
+        eloElem.style.color = '#ff7e5f';
+      } else if (userElo >= 600) {
+        badgeElem.innerText = '👑 Красавчик';
+        eloElem.style.color = '#45f3ff';
+      } else if (userElo >= 300) {
+        badgeElem.innerText = '🔥 Опыт';
+        eloElem.style.color = '#00ff88';
+      } else {
+        badgeElem.innerText = '🐣 Новичок';
+        eloElem.style.color = '#ffffff';
+      }
+    }
+
+    updateRankDisplay();
+
+    const savedPhoto = localStorage.getItem('user_photo');
+    if (savedPhoto) {
+      document.getElementById('avatar-box').innerHTML = `<img src="${savedPhoto}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+    }
+
+    function uploadPhoto(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const imgUrl = e.target.result;
+          localStorage.setItem('user_photo', imgUrl);
+          document.getElementById('avatar-box').innerHTML = `<img src="${imgUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function startBattle() {
+      document.getElementById('profile-screen').classList.add('hidden');
+      document.getElementById('battle-screen').classList.remove('hidden');
+      loadNextPair();
+    }
+
+    function showProfile() {
+      document.getElementById('battle-screen').classList.add('hidden');
+      document.getElementById('profile-screen').classList.remove('hidden');
+      updateRankDisplay();
+    }
+
+    function loadNextPair() {
+      const rand1 = Math.floor(Math.random() * 1000);
+      const rand2 = Math.floor(Math.random() * 1000);
+      document.getElementById('p1-img').src = `https://picsum.photos/400/400?random=${rand1}`;
+      document.getElementById('p2-img').src = `https://picsum.photos/400/400?random=${rand2}`;
+    }
+
+    function vote(candidateNumber) {
+      userElo += 15;
+      localStorage.setItem('user_elo', userElo);
+      
+      if (tg?.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred('medium');
+      }
+      
+      loadNextPair();
     }
   </script>
 </body>
