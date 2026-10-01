@@ -106,8 +106,6 @@
       font-size: 15px;
       color: #ccc;
     }
-    
-    /* Экран Баттла */
     .battle-container {
       display: flex;
       flex-direction: column;
@@ -130,7 +128,7 @@
     }
     .candidate img {
       width: 100%;
-      height: 220px;
+      height: 240px;
       object-fit: cover;
       display: block;
     }
@@ -176,7 +174,7 @@
     <button class="btn" onclick="startBattle()">🔥 ИСКАТЬ ДУЭЛЬ</button>
   </div>
 
-  <!-- Экран голосования (Баттл) -->
+  <!-- Экран баттла -->
   <div id="battle-screen" class="battle-container hidden">
     <h3 style="text-align: center; color: #aaa;">Кто выглядит лучше?</h3>
     
@@ -204,7 +202,6 @@
       }
     }
 
-    // Старт с 0 ELO
     let userElo = parseInt(localStorage.getItem('user_elo')) || 0;
     
     function updateRankDisplay() {
@@ -272,11 +269,46 @@
       updateRankDisplay();
     }
 
+    // База реальных портретов с Unsplash
+    const portraitIds = [
+      "1534528741775-53994a69daeb",
+      "1507003211169-0a1dd7228f2d",
+      "1500648767791-00dcc994a43e",
+      "1494790108377-be9c29b29330",
+      "1517841905240-472988babdf9",
+      "1539571696357-5a69c17a67c6",
+      "1524504388940-b1c1722653e1",
+      "1501196354995-cbb51c65aaea",
+      "1529626455594-4ff0802cfb7e",
+      "1488426862026-3ee34a7d66df"
+    ];
+
+    function getRandomPortrait() {
+      const userPhoto = localStorage.getItem('user_photo');
+      // Ипользуем загруженное фото игрока с вероятностью 30%
+      if (userPhoto && Math.random() < 0.3) {
+        return { src: userPhoto, name: document.getElementById('username').innerText };
+      }
+      const randomId = portraitIds[Math.floor(Math.random() * portraitIds.length)];
+      const randomNum = Math.floor(Math.random() * 900) + 100;
+      return { 
+        src: `https://images.unsplash.com/photo-${randomId}?auto=format&fit=crop&w=400&q=80`, 
+        name: `Игрок #${randomNum}` 
+      };
+    }
+
     function loadNextPair() {
-      const rand1 = Math.floor(Math.random() * 1000);
-      const rand2 = Math.floor(Math.random() * 1000);
-      document.getElementById('p1-img').src = `https://picsum.photos/400/400?random=${rand1}`;
-      document.getElementById('p2-img').src = `https://picsum.photos/400/400?random=${rand2}`;
+      const p1 = getRandomPortrait();
+      let p2 = getRandomPortrait();
+      
+      while (p1.src === p2.src) {
+        p2 = getRandomPortrait();
+      }
+
+      document.getElementById('p1-img').src = p1.src;
+      document.getElementById('p1-name').innerText = p1.name;
+      document.getElementById('p2-img').src = p2.src;
+      document.getElementById('p2-name').innerText = p2.name;
     }
 
     function vote(candidateNumber) {
