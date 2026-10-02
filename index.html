@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Look Battle MAX - Dual Mode</title>
+  <title>Look Battle MAX - Video Fix</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -229,7 +229,7 @@
     <button class="btn btn-ai" onclick="switchTab('battle')">🤖 БОЙ ИИ-СУДЬИ</button>
   </div>
 
-  <!-- 2. ОСНОВНОЙ РЕЖИМ: АВТОМАТИЧЕСКАЯ ИИ-ДУЭЛЬ -->
+  <!-- 2. ИИ-ДУЭЛЬ -->
   <div id="tab-battle" class="battle-container hidden">
     <h3 style="text-align: center; color: #aaa;">Основная ИИ-Арена</h3>
     <p style="text-align: center; font-size: 12px; color: #a800ff; margin-top: -4px;">🤖 Нейросеть сама сравнивает красоту кадра</p>
@@ -251,7 +251,7 @@
     <button class="btn btn-ai" onclick="runAiBattle()">⚖️ Пусть ИИ выберет победителя</button>
   </div>
 
-  <!-- 3. LIVE ВИДЕО РУЛЕТКА (ЗДЕСЬ ГОЛОСОВАНИЕ ВРУЧНУЮ) -->
+  <!-- 3. LIVE ВИДЕО РУЛЕТКА -->
   <div id="tab-video" class="card hidden">
     <h2>🎥 Live Видео Рулетка 1v1</h2>
     <p style="color: #888; font-size: 12px; margin-top: 4px;" id="video-status">Нажми "Искать видео-соперника"</p>
@@ -293,24 +293,12 @@
     </div>
   </div>
 
-  <!-- 5. Топ Лидеров -->
+  <!-- 5. Топ -->
   <div id="tab-top" class="card hidden">
     <h2>🏆 Топ Игроков Мира</h2>
     <p style="color: #888; font-size: 12px; margin-bottom: 14px;">Лучшие дуэлянты по версии ИИ</p>
     <div id="leaderboard-list">
       <div style="color: #6c7289;">Загрузка топа...</div>
-    </div>
-  </div>
-
-  <!-- 6. Донат -->
-  <div id="tab-shop" class="card hidden">
-    <h2>⭐ Магазин Telegram Stars</h2>
-    <p style="color: #888; font-size: 12px; margin: 8px 0 14px;">Получай эксклюзивные бонусы за ТГ Звезды</p>
-    
-    <div style="background: #0d0f17; padding: 14px; border-radius: 14px; margin-bottom: 10px; border: 1px solid #ffd700;">
-      <h3>💰 500 Монет</h3>
-      <p style="color: #ffd700; font-weight: bold; margin: 6px 0;">10 ⭐ Telegram Stars</p>
-      <button class="btn btn-stars" onclick="buyStars(10, 500)">Купить</button>
     </div>
   </div>
 
@@ -389,7 +377,7 @@
     updateUI();
 
     function switchTab(tabName) {
-      const tabs = ['profile', 'battle', 'video', 'cases', 'top', 'shop'];
+      const tabs = ['profile', 'battle', 'video', 'cases', 'top'];
       tabs.forEach(t => {
         const el = document.getElementById('tab-' + t);
         if (el) el.classList.add('hidden');
@@ -419,11 +407,8 @@
       let colorVariation = 0;
 
       for (let i = 0; i < imageData.length; i += 4) {
-        const r = imageData[i];
-        const g = imageData[i+1];
-        const b = imageData[i+2];
-        brightness += (r + g + b) / 3;
-        colorVariation += Math.abs(r - g) + Math.abs(g - b);
+        brightness += (imageData[i] + imageData[i+1] + imageData[i+2]) / 3;
+        colorVariation += Math.abs(imageData[i] - imageData[i+1]) + Math.abs(imageData[i+1] - imageData[i+2]);
       }
 
       brightness = brightness / (100 * 100);
@@ -506,7 +491,6 @@
       document.getElementById('p2-ai').innerText = `AI: ${currentP2.aiScore || 75}/100`;
     }
 
-    /* 🤖 ИИ САМ ВЫБИРАЕТ ПОБЕДИТЕЛЯ */
     function runAiBattle() {
       const score1 = currentP1.aiScore || 70;
       const score2 = currentP2.aiScore || 75;
@@ -514,7 +498,7 @@
       let winner = score1 >= score2 ? currentP1 : currentP2;
       let loser = score1 >= score2 ? currentP2 : currentP1;
 
-      alert(`🤖 ИИ принял решение!\nПобедил: ${winner.name} (${Math.max(score1, score2)}/100)\nПроиграл: ${loser.name} (${Math.min(score1, score2)}/100)`);
+      alert(`🤖 ИИ принял решение!\nПобедил: ${winner.name} (${Math.max(score1, score2)}/100)`);
 
       if (winner.id === userId) {
         userElo += 20;
@@ -537,7 +521,7 @@
 
     function openBox(cost) {
       if (coins < cost) {
-        alert('Не хватает монет! Участвуйте в ИИ-дуэлях.');
+        alert('Не хватает монет!');
         return;
       }
       coins -= cost;
@@ -566,19 +550,23 @@
       });
     }
 
-    function buyStars(starsCount, coinsReward) {
-      alert(`Запрос оплаты ${starsCount} ⭐ Telegram Stars.`);
-    }
-
-    /* 🎥 LIVE WEBRTC ВИДЕОЧАТ */
+    /* 🎥 ИСПРАВЛЕННОЕ ВКЛЮЧЕНИЕ КАМЕРЫ */
     let localStream = null;
     let peer = null;
 
     function initLocalCamera() {
       if (localStream) return;
-      navigator.mediaDevices?.getUserMedia({ video: true, audio: true }).then(stream => {
+      
+      const constraints = {
+        video: { facingMode: "user" },
+        audio: false
+      };
+
+      navigator.mediaDevices?.getUserMedia(constraints).then(stream => {
         localStream = stream;
-        document.getElementById('local-video').srcObject = stream;
+        const localVid = document.getElementById('local-video');
+        localVid.srcObject = stream;
+        localVid.play();
         
         const cleanPeerId = 'look_' + userId.replace(/[^a-zA-Z0-9]/g, '');
         peer = new Peer(cleanPeerId);
@@ -586,13 +574,16 @@
         peer.on('call', call => {
           call.answer(localStream);
           call.on('stream', remoteStream => {
-            document.getElementById('remote-video').srcObject = remoteStream;
+            const remoteVid = document.getElementById('remote-video');
+            remoteVid.srcObject = remoteStream;
+            remoteVid.play();
             document.getElementById('video-status').innerText = '🔥 СОЕДИНЕНО!';
             toggleVideoUI(true);
           });
         });
       }).catch(err => {
-        document.getElementById('video-status').innerText = 'Разрешите доступ к камере';
+        console.error("Ошибка камеры:", err);
+        document.getElementById('video-status').innerText = 'Ошибка запуска веб-камеры';
       });
     }
 
@@ -617,7 +608,9 @@
           document.getElementById('remote-label').innerText = opponent.name;
           const call = peer.call(opponent.id, localStream);
           call.on('stream', remoteStream => {
-            document.getElementById('remote-video').srcObject = remoteStream;
+            const remoteVid = document.getElementById('remote-video');
+            remoteVid.srcObject = remoteStream;
+            remoteVid.play();
             document.getElementById('video-status').innerText = '🔥 СОЕДИНЕНО!';
             toggleVideoUI(true);
           });
