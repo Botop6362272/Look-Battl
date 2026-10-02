@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Look Battle MAX - Case Roulette Edition</title>
+  <title>Look Battle MAX - Ultimate Edition</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -11,7 +11,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
     body {
-      background: #090a0f;
+      background: #06070a;
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       padding: 10px;
@@ -19,48 +19,53 @@
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
+      overflow-x: hidden;
     }
 
+    /* Навигация */
     .nav-bar {
       position: fixed;
       bottom: 0;
       left: 0;
       width: 100%;
-      background: #12141d;
+      background: rgba(18, 20, 29, 0.95);
+      backdrop-filter: blur(10px);
       display: flex;
       justify-content: space-around;
-      padding: 10px 0;
-      border-top: 2px solid #2a2e3d;
+      padding: 8px 0;
+      border-top: 1px solid rgba(0, 240, 255, 0.2);
       z-index: 1000;
     }
     .nav-item {
       color: #6c7289;
-      font-size: 11px;
+      font-size: 9px;
       font-weight: bold;
       text-align: center;
       cursor: pointer;
       flex: 1;
+      transition: 0.2s;
     }
-    .nav-item.active { color: #00f0ff; text-shadow: 0 0 10px rgba(0,240,255,0.5); }
-    .nav-item span { font-size: 20px; display: block; margin-bottom: 2px; }
+    .nav-item.active { color: #00f0ff; text-shadow: 0 0 10px rgba(0,240,255,0.6); }
+    .nav-item span { font-size: 16px; display: block; margin-bottom: 2px; }
 
     .card {
-      background: #171a26;
+      background: linear-gradient(145deg, #121520, #1b2030);
       border-radius: 20px;
-      padding: 18px;
+      padding: 16px;
       width: 100%;
       max-width: 400px;
       text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-      border: 1px solid #2c3144;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
       margin-bottom: 75px;
     }
 
-    .frame-default { border: 4px solid #00f0ff; }
-    .frame-100 { border: 4px solid #00ff88 !important; box-shadow: 0 0 15px #00ff88; }
-    .frame-200 { border: 4px solid #ffd700 !important; box-shadow: 0 0 20px #ffd700; }
-    .frame-300 { border: 4px solid #ff0055 !important; box-shadow: 0 0 25px #ff0055; animation: pulse 1.5s infinite; }
-    .frame-500 { border: 4px solid #a800ff !important; box-shadow: 0 0 35px #a800ff; animation: pulse 0.8s infinite; }
+    /* Рамки рангов */
+    .frame-default { border: 3px solid #00f0ff; }
+    .frame-100 { border: 3px solid #00ff88 !important; box-shadow: 0 0 15px #00ff88; }
+    .frame-200 { border: 3px solid #ffd700 !important; box-shadow: 0 0 20px #ffd700; }
+    .frame-300 { border: 3px solid #ff0055 !important; box-shadow: 0 0 25px #ff0055; animation: pulse 1.5s infinite; }
+    .frame-500 { border: 3px solid #a800ff !important; box-shadow: 0 0 35px #a800ff; animation: pulse 0.8s infinite; }
 
     @keyframes pulse {
       0% { box-shadow: 0 0 10px #ff0055; }
@@ -70,8 +75,8 @@
 
     .avatar-wrapper {
       position: relative;
-      width: 120px;
-      height: 120px;
+      width: 110px;
+      height: 110px;
       margin: 0 auto 10px;
     }
     .avatar {
@@ -83,128 +88,149 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 48px;
+      font-size: 42px;
     }
 
     .ai-score-badge {
       background: linear-gradient(135deg, #a800ff, #00f0ff);
       color: #fff;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 900;
       padding: 4px 10px;
       border-radius: 20px;
       display: inline-block;
       margin-bottom: 8px;
-      box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+      box-shadow: 0 0 12px rgba(168, 0, 255, 0.4);
     }
 
     .stats-container {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       gap: 6px;
-      background: #0d0f17;
+      background: rgba(0,0,0,0.3);
       padding: 10px;
-      border-radius: 14px;
-      margin: 12px 0;
-      border: 1px solid #252a3b;
+      border-radius: 12px;
+      margin: 10px 0;
+      border: 1px solid rgba(255,255,255,0.05);
     }
-    .stat-val { font-size: 16px; font-weight: 900; color: #00f0ff; }
-    .stat-lbl { font-size: 10px; color: #7f8b9e; text-transform: uppercase; margin-top: 2px; }
+    .stat-val { font-size: 15px; font-weight: 900; color: #00f0ff; }
+    .stat-lbl { font-size: 9px; color: #7f8b9e; text-transform: uppercase; margin-top: 2px; }
 
     .btn {
       background: linear-gradient(135deg, #00f0ff, #ff0055);
       border: none;
       color: white;
-      padding: 14px;
-      border-radius: 14px;
-      font-size: 15px;
+      padding: 13px;
+      border-radius: 12px;
+      font-size: 14px;
       font-weight: 800;
       width: 100%;
       cursor: pointer;
       margin-top: 8px;
       box-shadow: 0 4px 15px rgba(255,0,85,0.3);
+      transition: 0.1s;
     }
-    .btn-secondary { background: #232838; color: #b4c0d3; box-shadow: none; }
-    .btn-stars { background: linear-gradient(135deg, #ffaa00, #ff5500); }
-    .btn-ai { background: linear-gradient(135deg, #a800ff, #00f0ff); font-size: 16px; }
+    .btn:active { transform: scale(0.97); }
+    .btn-secondary { background: #232838; color: #b4c0d3; box-shadow: none; border: 1px solid rgba(255,255,255,0.05); }
+    .btn-stars { background: linear-gradient(135deg, #ffaa00, #ff5500); box-shadow: 0 4px 15px rgba(255,170,0,0.3); }
+    .btn-ai { background: linear-gradient(135deg, #a800ff, #00f0ff); box-shadow: 0 4px 15px rgba(168,0,255,0.3); }
 
+    /* Битвы ИИ */
     .battle-container { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 400px; margin-bottom: 75px; }
     .candidate {
       background: #171a26;
-      border-radius: 18px;
+      border-radius: 16px;
       overflow: hidden;
       position: relative;
       border: 2px solid #2c3144;
     }
-    .candidate img { width: 100%; height: 200px; object-fit: cover; display: block; }
-    .candidate-info { padding: 10px; text-align: center; font-size: 15px; font-weight: bold; background: rgba(0,0,0,0.7); }
+    .candidate img { width: 100%; height: 180px; object-fit: cover; display: block; }
+    .candidate-info { padding: 8px; text-align: center; font-size: 14px; font-weight: bold; background: rgba(0,0,0,0.7); }
     .ai-candidate-score {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      top: 8px;
+      right: 8px;
       background: rgba(0,0,0,0.85);
       border: 1px solid #00f0ff;
       color: #00f0ff;
-      padding: 4px 10px;
-      border-radius: 8px;
-      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
       font-weight: 800;
     }
+    .vs-divider { text-align: center; font-size: 20px; font-weight: 900; color: #ff0055; text-shadow: 0 0 10px #ff0055; }
 
-    .vs-divider { text-align: center; font-size: 22px; font-weight: 900; color: #ff0055; text-shadow: 0 0 10px #ff0055; }
+    /* Видеочат */
+    .video-grid { display: flex; flex-direction: column; gap: 8px; position: relative; margin: 10px 0; }
+    .video-box {
+      position: relative;
+      width: 100%;
+      height: 160px;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid #2c3144;
+    }
+    .video-box video { width: 100%; height: 100%; object-fit: cover; }
+    .video-label {
+      position: absolute;
+      bottom: 6px;
+      left: 6px;
+      background: rgba(0,0,0,0.7);
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: bold;
+    }
 
-    /* 🎰 РУЛЕТКА КЕЙСОВ */
-    .case-roulette-box {
-      background: #0d0f17;
-      border: 2px solid #ffaa00;
-      border-radius: 16px;
-      padding: 15px;
-      margin-bottom: 12px;
+    /* Кейсы и рулетка */
+    .case-card {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
     .roulette-window {
       width: 100%;
-      height: 100px;
-      background: #12141d;
+      height: 85px;
+      background: #0b0e14;
       border-radius: 10px;
       overflow: hidden;
       position: relative;
       display: flex;
       align-items: center;
       border: 1px solid #333;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     .roulette-pointer {
       position: absolute;
-      top: 0;
-      left: 50%;
+      top: 0; left: 50%;
       transform: translateX(-50%);
-      width: 4px;
-      height: 100%;
+      width: 3px; height: 100%;
       background: #ff0055;
       z-index: 10;
-      box-shadow: 0 0 10px #ff0055;
+      box-shadow: 0 0 8px #ff0055;
     }
     .roulette-track {
       display: flex;
-      gap: 10px;
+      gap: 6px;
       position: absolute;
       left: 0;
       transition: left 4s cubic-bezier(0.15, 0.85, 0.35, 1);
     }
     .roulette-item {
-      min-width: 80px;
-      height: 80px;
-      background: #1c2130;
+      min-width: 75px; height: 75px;
+      background: #171d2c;
       border-radius: 8px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      font-weight: bold;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      font-size: 10px; font-weight: bold;
       border: 2px solid #444;
-      padding: 5px;
-      text-align: center;
+      padding: 4px; text-align: center;
     }
     .rarity-common { border-color: #7f8b9e; color: #b4c0d3; }
     .rarity-rare { border-color: #00f0ff; color: #00f0ff; }
@@ -215,55 +241,54 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 6px;
-      max-height: 120px;
+      max-height: 100px;
       overflow-y: auto;
-      margin-top: 10px;
+      margin-top: 6px;
     }
     .inv-item {
-      background: #0d0f17;
+      background: rgba(0,0,0,0.4);
       border-radius: 8px;
       padding: 6px;
-      font-size: 10px;
+      font-size: 9px;
       text-align: center;
-      border: 1px solid #333;
+      border: 1px solid rgba(255,255,255,0.05);
     }
 
-    .video-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      position: relative;
-      margin: 12px 0;
+    /* Боевой Пропуск */
+    .pass-container {
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      padding: 10px;
+      margin-bottom: 8px;
+      border: 1px solid rgba(168,0,255,0.3);
     }
-    .video-box {
-      position: relative;
-      width: 100%;
-      height: 170px;
-      background: #000;
-      border-radius: 14px;
-      overflow: hidden;
-      border: 2px solid #2c3144;
-    }
-    .video-box video { width: 100%; height: 100%; object-fit: cover; }
-    .video-label {
-      position: absolute;
-      bottom: 8px;
-      left: 8px;
-      background: rgba(0,0,0,0.7);
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: bold;
-    }
-
-    .leader-row {
+    .pass-level-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #0d0f17;
-      padding: 10px 14px;
-      border-radius: 10px;
-      margin-bottom: 6px;
+      background: #171a26;
+      padding: 6px 10px;
+      border-radius: 8px;
+      margin-bottom: 5px;
+      font-size: 11px;
+    }
+    .pass-btn {
+      background: #232838; color: #7f8b9e;
+      border: none; padding: 3px 8px;
+      border-radius: 5px; font-size: 10px; font-weight: bold; cursor: pointer;
+    }
+    .pass-btn.claimed { background: #00ff88; color: #000; }
+
+    /* Ачивки */
+    .ach-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(0,0,0,0.3); padding: 8px 10px; border-radius: 10px;
+      margin-bottom: 5px; font-size: 11px; text-align: left;
+    }
+
+    .leader-row {
+      display: flex; justify-content: space-between; align-items: center;
+      background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 8px; margin-bottom: 5px; font-size: 12px;
     }
 
     .hidden { display: none !important; }
@@ -297,6 +322,7 @@
       </div>
     </div>
 
+    <button class="btn btn-secondary" style="margin-bottom: 4px;" onclick="claimDailyBonus()">🎁 Ежедневный Бонус</button>
     <label class="btn btn-secondary">
       📷 Сменить фото профиля
       <input type="file" id="photo-input" accept="image/*" onchange="uploadPhoto(event)">
@@ -306,8 +332,8 @@
 
   <!-- 2. ИИ-ДУЭЛЬ -->
   <div id="tab-battle" class="battle-container hidden">
-    <h3 style="text-align: center; color: #aaa;">ИИ-Арена</h3>
-    <p style="text-align: center; font-size: 12px; color: #a800ff; margin-top: -4px;">🤖 Нейросеть оценивает стиль и качество</p>
+    <h3 style="text-align: center; color: #aaa; font-size: 14px;">ИИ-Арена Сравнения</h3>
+    <p style="text-align: center; font-size: 11px; color: #a800ff; margin-top: -2px;">🤖 Нейросеть оценивает стиль и качество</p>
 
     <div class="candidate">
       <div class="ai-candidate-score" id="p1-ai">AI: --</div>
@@ -323,20 +349,19 @@
       <div class="candidate-info" id="p2-name">Загрузка...</div>
     </div>
 
-    <button class="btn btn-ai" onclick="runAiBattle()">⚖️ Запустить ИИ-Оценку</button>
+    <button class="btn btn-ai" onclick="runAiBattle()">⚖️ Оценить и получить XP (+35 XP)</button>
   </div>
 
-  <!-- 3. ВИДЕОЧАТ -->
+  <!-- 3. ВИДЕОЧАТ 1v1 -->
   <div id="tab-video" class="card hidden">
-    <h2>🎥 Live Видео Рулетка 1v1</h2>
-    <p style="color: #888; font-size: 12px; margin-top: 4px;" id="video-status">Нажми "Искать видео-соперника"</p>
+    <h2 style="font-size: 16px;">🎥 Live Видео Рулетка 1v1</h2>
+    <p style="color: #888; font-size: 11px; margin-top: 2px;" id="video-status">Нажми "Искать видео-соперника"</p>
     
     <div class="video-grid">
       <div class="video-box" style="border-color: #ff0055;">
         <video id="remote-video" autoplay playsinline></video>
         <div class="video-label" id="remote-label">Соперник</div>
       </div>
-
       <div class="video-box" style="border-color: #00f0ff;">
         <video id="local-video" autoplay playsinline muted></video>
         <div class="video-label">Вы</div>
@@ -345,49 +370,71 @@
 
     <button class="btn" id="search-v-btn" onclick="startVideoSearch()">🔍 ИСКАТЬ СОПЕРНИКА</button>
     <button class="btn btn-stars hidden" id="vote-v-btn" onclick="voteVideoOpponent()">🔥 Отдать голос (+20 ELO)</button>
-    <button class="btn btn-secondary hidden" id="next-v-btn" style="margin-top:6px;" onclick="startVideoSearch()">⏭️ Следующий</button>
+    <button class="btn btn-secondary hidden" id="next-v-btn" style="margin-top:4px;" onclick="startVideoSearch()">⏭️ Следующий</button>
   </div>
 
   <!-- 4. КЕЙСЫ И РУЛЕТКА -->
   <div id="tab-cases" class="card hidden">
-    <h2>📦 Рулетка Кейсов</h2>
-    <p style="color: #888; font-size: 12px; margin: 6px 0 12px;">Крути кейсы за ⭐ Telegram Stars!</p>
-    
-    <div class="case-roulette-box">
-      <h3 style="color: #ffaa00; margin-bottom: 8px;">🎁 Премиум Кейс Look</h3>
-      
-      <!-- Окно рулетки -->
-      <div class="roulette-window">
-        <div class="roulette-pointer"></div>
-        <div class="roulette-track" id="roulette-track">
-          <!-- Динамически заполняется предметами -->
-        </div>
-      </div>
+    <h2 style="font-size: 16px;">📦 Рулетка Кейсов</h2>
+    <p style="color: #888; font-size: 10px; margin: 2px 0 8px;">Крути кейсы за ⭐ Telegram Stars!</p>
 
-      <button class="btn btn-stars" id="open-case-btn" onclick="openCaseWithStars()">⭐ Открыть за 25 Stars</button>
+    <div class="case-card">
+      <div style="text-align: left;">
+        <b style="font-size: 12px;">🎁 Бро-Кейс</b><br><span style="font-size:9px; color:#aaa;">Обычные шмотки</span>
+      </div>
+      <button class="btn btn-stars" style="width: auto; padding: 6px 12px; margin:0; font-size:12px;" onclick="openCase(10, 'bronze')">10 ⭐</button>
     </div>
 
-    <h4 style="text-align: left; font-size: 13px; color: #a800ff; margin-top: 10px;">🎒 Ваш Инвентарь:</h4>
+    <div class="case-card" style="border-color: #ffaa00;">
+      <div style="text-align: left;">
+        <b style="font-size: 12px;">🔥 Премиум Кейс</b><br><span style="font-size:9px; color:#ffaa00;">Эпик и Легендарки</span>
+      </div>
+      <button class="btn btn-stars" style="width: auto; padding: 6px 12px; margin:0; font-size:12px;" onclick="openCase(25, 'gold')">25 ⭐</button>
+    </div>
+    
+    <div class="roulette-window" style="margin-top: 8px;">
+      <div class="roulette-pointer"></div>
+      <div class="roulette-track" id="roulette-track"></div>
+    </div>
+    <button class="btn btn-ai" id="open-spin-btn" onclick="spinSelectedCase()">🎰 КРУТИТЬ РУЛЕТКУ</button>
+
+    <h4 style="text-align: left; font-size: 11px; color: #a800ff; margin-top: 8px;">🎒 Инвентарь:</h4>
     <div class="inventory-grid" id="inventory-list">
-      <div style="grid-column: span 3; color: #666; font-size: 11px; padding: 10px;">Пусто. Откройте первый кейс!</div>
+      <div style="grid-column: span 3; color: #666; font-size: 9px; padding: 4px;">Пусто. Открой кейс!</div>
     </div>
   </div>
 
-  <!-- 5. ТОП -->
+  <!-- 5. ЛУК ПАСС И АЧИВКИ -->
+  <div id="tab-pass" class="card hidden">
+    <h2 style="font-size: 16px;">🎟️ LOOK PASS & ДОСТИЖЕНИЯ</h2>
+    <p style="color: #888; font-size: 10px; margin: 2px 0 8px;">Получай XP за бои и забирай награды!</p>
+    
+    <div style="background: rgba(0,0,0,0.3); padding: 6px; border-radius: 8px; margin-bottom: 8px; font-size: 11px;">
+      Уровень: <b id="pass-level-val" style="color:#00f0ff;">1</b> | XP: <span id="pass-xp-val">0</span>/100
+    </div>
+
+    <div class="pass-container" id="pass-levels-container"></div>
+
+    <h4 style="text-align: left; font-size: 11px; color: #00f0ff; margin-top: 8px;">🏆 Достижения:</h4>
+    <div id="achievements-list" style="margin-top: 4px;"></div>
+  </div>
+
+  <!-- 6. ТОП МИРА -->
   <div id="tab-top" class="card hidden">
-    <h2>🏆 Топ Игроков Мира</h2>
-    <p style="color: #888; font-size: 12px; margin-bottom: 14px;">Лучшие дуэлянты по версии ИИ</p>
+    <h2 style="font-size: 16px;">🏆 Топ Мира ELO</h2>
+    <p style="color: #888; font-size: 11px; margin-bottom: 10px;">Лучшие дуэлянты платформы</p>
     <div id="leaderboard-list">
-      <div style="color: #6c7289;">Загрузка топа...</div>
+      <div style="color: #6c7289; font-size: 12px;">Загрузка топа...</div>
     </div>
   </div>
 
   <!-- Нижнее Меню -->
   <div class="nav-bar">
     <div class="nav-item active" id="nav-profile" onclick="switchTab('profile')"><span>👤</span>Профиль</div>
-    <div class="nav-item" id="nav-battle" onclick="switchTab('battle')"><span>🤖</span>ИИ-Дуэль</div>
+    <div class="nav-item" id="nav-battle" onclick="switchTab('battle')"><span>🤖</span>Дуэли</div>
     <div class="nav-item" id="nav-video" onclick="switchTab('video')"><span>🎥</span>Видео</div>
     <div class="nav-item" id="nav-cases" onclick="switchTab('cases')"><span>📦</span>Кейсы</div>
+    <div class="nav-item" id="nav-pass" onclick="switchTab('pass')"><span>🎟️</span>Pass</div>
     <div class="nav-item" id="nav-top" onclick="switchTab('top')"><span>🏆</span>Топ</div>
   </div>
 
@@ -422,35 +469,57 @@
     let coins = parseInt(localStorage.getItem('user_coins')) || 100;
     let myAiScore = parseInt(localStorage.getItem('user_ai_score')) || 75;
     let inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
+    let passXp = parseInt(localStorage.getItem('pass_xp')) || 0;
+    let passLevel = parseInt(localStorage.getItem('pass_level')) || 1;
+    let claimedRewards = JSON.parse(localStorage.getItem('claimed_rewards')) || [];
+    let achievements = JSON.parse(localStorage.getItem('user_achievements')) || { battle: false, case: false, video: false };
+    let lastDailyDate = localStorage.getItem('last_daily_date') || '';
 
-    // Возможные призы в кейсе
-    const caseItems = [
-      { name: "Кепка Новичка", rarity: "rarity-common", type: "Обычный", value: 50 },
-      { name: "Неоновые Очки", rarity: "rarity-rare", type: "Редкий", value: 150 },
-      { name: "Худи киберспорт", rarity: "rarity-rare", type: "Редкий", value: 200 },
-      { name: "Золотая цепь", rarity: "rarity-epic", type: "Эпический", value: 500 },
-      { name: "Маска Гигачада", rarity: "rarity-legendary", type: "Легендарный", value: 1500 },
-    ];
+    let selectedCaseType = 'gold';
+
+    const caseItems = {
+      bronze: [
+        { name: "Кепка Новичка", rarity: "rarity-common", type: "Обычный" },
+        { name: "Футболка Бро", rarity: "rarity-common", type: "Обычный" },
+        { name: "Спортивки", rarity: "rarity-rare", type: "Редкий" },
+        { name: "Кроссы Nike", rarity: "rarity-epic", type: "Эпический" }
+      ],
+      gold: [
+        { name: "Неоновые Очки", rarity: "rarity-rare", type: "Редкий" },
+        { name: "Худи киберспорт", rarity: "rarity-rare", type: "Редкий" },
+        { name: "Золотая цепь", rarity: "rarity-epic", type: "Эпический" },
+        { name: "Маска Гигачада", rarity: "rarity-legendary", type: "Легендарный" },
+        { name: "Корона Императора", rarity: "rarity-legendary", type: "Легендарный" }
+      ]
+    };
+
+    function triggerHaptic(style = 'medium') {
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred(style);
+    }
 
     function updateUI() {
       document.getElementById('elo-val').innerText = userElo;
       document.getElementById('coins-val').innerText = coins;
       document.getElementById('ai-score-badge').innerText = `🤖 AI Look: ${myAiScore} / 100`;
+      document.getElementById('pass-level-val').innerText = passLevel;
+      document.getElementById('pass-xp-val').innerText = passXp;
 
-      // Рендер инвентаря
+      // Инвентарь
       const invContainer = document.getElementById('inventory-list');
       if (inventory.length === 0) {
-        invContainer.innerHTML = `<div style="grid-column: span 3; color: #666; font-size: 11px; padding: 10px;">Пусто. Откройте кейс!</div>`;
+        invContainer.innerHTML = `<div style="grid-column: span 3; color: #666; font-size: 9px; padding: 4px;">Пусто. Открой кейс!</div>`;
       } else {
         invContainer.innerHTML = '';
         inventory.forEach(item => {
-          invContainer.innerHTML += `<div class="inv-item ${item.rarity}"><b>${item.name}</b><br><span style="font-size:9px">${item.type}</span></div>`;
+          invContainer.innerHTML += `<div class="inv-item ${item.rarity}"><b>${item.name}</b><br><span style="font-size:8px">${item.type}</span></div>`;
         });
       }
 
+      renderPassLevels();
+      renderAchievements();
+
       const avatarBox = document.getElementById('avatar-box');
       avatarBox.classList.remove('frame-default', 'frame-100', 'frame-200', 'frame-300', 'frame-500');
-
       if (userElo >= 500) avatarBox.classList.add('frame-500');
       else if (userElo >= 300) avatarBox.classList.add('frame-300');
       else if (userElo >= 200) avatarBox.classList.add('frame-200');
@@ -467,7 +536,8 @@
     updateUI();
 
     function switchTab(tabName) {
-      const tabs = ['profile', 'battle', 'video', 'cases', 'top'];
+      triggerHaptic('light');
+      const tabs = ['profile', 'battle', 'video', 'cases', 'pass', 'top'];
       tabs.forEach(t => {
         const el = document.getElementById('tab-' + t);
         if (el) el.classList.add('hidden');
@@ -483,60 +553,69 @@
       if (tabName === 'battle') startBattle();
       if (tabName === 'top') loadLeaderboard();
       if (tabName === 'video') initLocalCamera();
-      if (tabName === 'cases') initRoulettePreview();
+      if (tabName === 'cases') initRoulettePreview(selectedCaseType);
     }
 
-    // Предзагрузка ленты рулетки
-    function initRoulettePreview() {
+    function claimDailyBonus() {
+      let today = new Date().toDateString();
+      if (lastDailyDate === today) {
+        alert('⏳ Вы уже забрали бонус сегодня! Возвращайтесь завтра.');
+        return;
+      }
+      lastDailyDate = today;
+      localStorage.setItem('last_daily_date', today);
+      coins += 100;
+      addPassXp(50);
+      localStorage.setItem('user_coins', coins);
+      triggerHaptic('heavy');
+      alert('🎉 Ежедневный бонус получен: +100 монет и +50 XP!');
+      updateUI();
+    }
+
+    function initRoulettePreview(type) {
+      selectedCaseType = type;
       const track = document.getElementById('roulette-track');
       track.style.transition = 'none';
       track.style.left = '0px';
       track.innerHTML = '';
+      let items = caseItems[type];
       for (let i = 0; i < 20; i++) {
-        let randItem = caseItems[Math.floor(Math.random() * caseItems.length)];
+        let randItem = items[Math.floor(Math.random() * items.length)];
         track.innerHTML += `<div class="roulette-item ${randItem.rarity}"><span>${randItem.name}</span></div>`;
       }
     }
 
-    // ⭐ ОТКРЫТИЕ КЕЙСА ЗА TELEGRAM STARS
-    function openCaseWithStars() {
+    function openCase(starsCost, type) {
+      selectedCaseType = type;
+      initRoulettePreview(type);
+      
       if (tg && tg.openInvoice) {
-        // Запрос реальной оплаты Telegram Stars (25 Звезд)
-        // В продакшене инвойс создается через бэкенд бота (createInvoiceLink)
         tg.openInvoice("https://t.me/$invoice_link_example", (status) => {
-          if (status === 'paid') {
-            spinRoulette();
-          } else {
-            alert('Оплата отменена');
-          }
+          if (status === 'paid') spinRoulette(type);
         });
       } else {
-        // Тестовый режим в браузере без звезд
-        spinRoulette();
+        spinRoulette(type);
       }
     }
 
-    // 🎰 АНИМАЦИЯ ПРОКРУТКИ РУЛЕТКИ
-    function spinRoulette() {
+    function spinSelectedCase() {
+      spinRoulette(selectedCaseType);
+    }
+
+    function spinRoulette(type) {
+      triggerHaptic('medium');
       const track = document.getElementById('roulette-track');
-      const btn = document.getElementById('open-case-btn');
+      const btn = document.getElementById('open-spin-btn');
       btn.disabled = true;
 
       track.innerHTML = '';
-      let generatedItems = [];
-      
-      // Генерируем 30 элементов для крутки, выигрыш будет на 22-й позиции
+      let items = caseItems[type];
       let winningIndex = 22;
       let winningItem = null;
 
       for (let i = 0; i < 30; i++) {
-        let item = caseItems[Math.floor(Math.random() * caseItems.length)];
-        if (i === winningIndex) {
-          // Шанс на легендарку или эпик
-          winningItem = Math.random() < 0.2 ? caseItems[4] : caseItems[Math.floor(Math.random() * 3)];
-          item = winningItem;
-        }
-        generatedItems.push(item);
+        let item = items[Math.floor(Math.random() * items.length)];
+        if (i === winningIndex) winningItem = item;
         track.innerHTML += `<div class="roulette-item ${item.rarity}"><span>${item.name}</span></div>`;
       }
 
@@ -544,8 +623,7 @@
       track.style.left = '0px';
 
       setTimeout(() => {
-        // Смещение до центра выпавшего предмета (элемент 80px + gap 10px = 90px)
-        let targetOffset = -(winningIndex * 90 - 140); 
+        let targetOffset = -(winningIndex * 81 - 140); 
         track.style.transition = 'left 4s cubic-bezier(0.15, 0.85, 0.35, 1)';
         track.style.left = targetOffset + 'px';
       }, 50);
@@ -553,28 +631,80 @@
       setTimeout(() => {
         inventory.push(winningItem);
         localStorage.setItem('user_inventory', JSON.stringify(inventory));
+        achievements.case = true;
+        localStorage.setItem('user_achievements', JSON.stringify(achievements));
+        triggerHaptic('heavy');
         updateUI();
-        alert(`🎉 Поздравляем! Вам выпало:\n${winningItem.name} (${winningItem.type})`);
+        alert(`🎉 Выпало: ${winningItem.name} (${winningItem.type})`);
         btn.disabled = false;
       }, 4100);
+    }
+
+    function renderPassLevels() {
+      const container = document.getElementById('pass-levels-container');
+      container.innerHTML = '';
+      const passRewards = [
+        { lvl: 1, reward: "+100 Монет", xpNeeded: 100 },
+        { lvl: 2, reward: "Скин: Неоновые Очки", xpNeeded: 250 },
+        { lvl: 3, reward: "+300 Монет", xpNeeded: 450 },
+        { lvl: 4, reward: "Легендарная Маска", xpNeeded: 700 }
+      ];
+
+      passRewards.forEach(p => {
+        let isClaimed = claimedRewards.includes(p.lvl);
+        let canClaim = passXp >= p.xpNeeded && !isClaimed;
+        let btnText = isClaimed ? '✅ Забрано' : (canClaim ? '🎁 Забрать' : `Нужно ${p.xpNeeded} XP`);
+        let btnClass = isClaimed ? 'pass-btn claimed' : (canClaim ? 'pass-btn btn-stars' : 'pass-btn');
+
+        container.innerHTML += `
+          <div class="pass-level-row">
+            <div><b>Ур. ${p.lvl}</b><br><span style="color:#aaa; font-size:9px;">${p.reward}</span></div>
+            <button class="${btnClass}" ${canClaim ? `onclick="claimPassReward(${p.lvl})"` : 'disabled'}>${btnText}</button>
+          </div>
+        `;
+      });
+    }
+
+    function claimPassReward(lvl) {
+      claimedRewards.push(lvl);
+      localStorage.setItem('claimed_rewards', JSON.stringify(claimedRewards));
+      coins += lvl * 100;
+      localStorage.setItem('user_coins', coins);
+      triggerHaptic('medium');
+      updateUI();
+      alert(`🎁 Награда за уровень ${lvl} получена!`);
+    }
+
+    function renderAchievements() {
+      const list = document.getElementById('achievements-list');
+      list.innerHTML = `
+        <div class="ach-row"><div>⚔️ Первый ИИ-бой</div><div style="color:${achievements.battle?'#00ff88':'#666'}">${achievements.battle?'Выполнено':'В процессе'}</div></div>
+        <div class="ach-row"><div>📦 Открытие кейса</div><div style="color:${achievements.case?'#00ff88':'#666'}">${achievements.case?'Выполнено':'В процессе'}</div></div>
+        <div class="ach-row"><div>🎥 Видео-рулетка 1v1</div><div style="color:${achievements.video?'#00ff88':'#666'}">${achievements.video?'Выполнено':'В процессе'}</div></div>
+      `;
+    }
+
+    function addPassXp(amount) {
+      passXp += amount;
+      if (passXp >= passLevel * 150) {
+        passLevel++;
+        localStorage.setItem('pass_level', passLevel);
+        alert(`🎉 Новый уровень Look Pass: ${passLevel}!`);
+      }
+      localStorage.setItem('pass_xp', passXp);
     }
 
     function analyzeImageBeauty(img) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      canvas.width = 100;
-      canvas.height = 100;
+      canvas.width = 100; canvas.height = 100;
       ctx.drawImage(img, 0, 0, 100, 100);
-
       const imageData = ctx.getImageData(0, 0, 100, 100).data;
-      let brightness = 0;
-      let colorVariation = 0;
-
+      let brightness = 0, colorVariation = 0;
       for (let i = 0; i < imageData.length; i += 4) {
         brightness += (imageData[i] + imageData[i+1] + imageData[i+2]) / 3;
         colorVariation += Math.abs(imageData[i] - imageData[i+1]) + Math.abs(imageData[i+1] - imageData[i+2]);
       }
-
       brightness = brightness / (100 * 100);
       let score = 50 + (brightness > 80 && brightness < 200 ? 25 : 10) + Math.min(25, Math.floor(colorVariation / 500));
       return Math.min(99, Math.max(60, Math.floor(score)));
@@ -583,33 +713,21 @@
     function uploadPhoto(event) {
       const file = event.target.files[0];
       if (!file) return;
-
       const img = new Image();
       const reader = new FileReader();
-
       reader.onload = function(e) {
         img.src = e.target.result;
         img.onload = function() {
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
-          canvas.width = 300;
-          canvas.height = 300;
+          canvas.width = 300; canvas.height = 300;
           ctx.drawImage(img, 0, 0, 300, 300);
-          
           const compressedPhoto = canvas.toDataURL('image/jpeg', 0.6);
           document.getElementById('avatar-box').innerHTML = `<img src="${compressedPhoto}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-
           myAiScore = analyzeImageBeauty(img);
           localStorage.setItem('user_ai_score', myAiScore);
-
-          db.ref('players/' + userId).set({
-            id: userId,
-            name: userName,
-            photo: compressedPhoto,
-            elo: userElo,
-            aiScore: myAiScore
-          });
-
+          db.ref('players/' + userId).set({ id: userId, name: userName, photo: compressedPhoto, elo: userElo, aiScore: myAiScore });
+          triggerHaptic('medium');
           updateUI();
           alert(`🤖 ИИ проверил фото!\nLook Score: ${myAiScore} / 100`);
         };
@@ -631,7 +749,6 @@
 
     function loadNextPair() {
       const availablePlayers = allPlayers.filter(p => p.id !== userId);
-
       if (availablePlayers.length < 2) {
         currentP1 = { id: userId, name: userName, photo: document.getElementById('avatar-box').querySelector('img')?.src || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400', elo: userElo, aiScore: myAiScore };
         currentP2 = { id: 'user_fake_1', name: 'Игрок Сообщества', photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400', elo: 120, aiScore: 78 };
@@ -641,20 +758,18 @@
         while (currentP1.id === p2Candidate.id) p2Candidate = availablePlayers[Math.floor(Math.random() * availablePlayers.length)];
         currentP2 = p2Candidate;
       }
-
       document.getElementById('p1-img').src = currentP1.photo;
       document.getElementById('p1-name').innerText = currentP1.name;
       document.getElementById('p1-ai').innerText = `AI: ${currentP1.aiScore || 70}/100`;
-
       document.getElementById('p2-img').src = currentP2.photo;
       document.getElementById('p2-name').innerText = currentP2.name;
       document.getElementById('p2-ai').innerText = `AI: ${currentP2.aiScore || 75}/100`;
     }
 
     function runAiBattle() {
+      triggerHaptic('medium');
       const score1 = currentP1.aiScore || 70;
       const score2 = currentP2.aiScore || 75;
-
       let winner = score1 >= score2 ? currentP1 : currentP2;
       let loser = score1 >= score2 ? currentP2 : currentP1;
 
@@ -667,11 +782,13 @@
         db.ref('players/' + winner.id + '/elo').transaction(c => (c || 0) + 20);
       }
 
-      coins += 5;
+      coins += 10;
+      addPassXp(40);
+      achievements.battle = true;
+      localStorage.setItem('user_achievements', JSON.stringify(achievements));
       localStorage.setItem('user_elo', userElo);
       localStorage.setItem('user_coins', coins);
 
-      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
       updateUI();
       loadNextPair();
     }
@@ -682,7 +799,6 @@
         const listElem = document.getElementById('leaderboard-list');
         listElem.innerHTML = '';
         if (!data) return;
-
         const playersArr = Object.values(data).sort((a,b) => b.elo - a.elo);
         playersArr.forEach((p, idx) => {
           listElem.innerHTML += `
@@ -704,10 +820,8 @@
         const localVid = document.getElementById('local-video');
         localVid.srcObject = stream;
         localVid.play();
-        
         const cleanPeerId = 'look_' + userId.replace(/[^a-zA-Z0-9]/g, '');
         peer = new Peer(cleanPeerId);
-
         peer.on('call', call => {
           call.answer(localStream);
           call.on('stream', remoteStream => {
@@ -719,26 +833,23 @@
           });
         });
       }).catch(err => {
-        document.getElementById('video-status').innerText = 'Ошибка запуска веб-камеры';
+        document.getElementById('video-status').innerText = 'Ошибка запуска камеры';
       });
     }
 
     function startVideoSearch() {
-      document.getElementById('video-status').innerText = '🔍 Поиск живого видео-соперника...';
+      triggerHaptic('light');
+      document.getElementById('video-status').innerText = '🔍 Поиск живого соперника...';
       document.getElementById('search-v-btn').classList.add('hidden');
-      
       const cleanPeerId = 'look_' + userId.replace(/[^a-zA-Z0-9]/g, '');
       db.ref('v_queue/' + cleanPeerId).set({ id: cleanPeerId, name: userName });
-
       db.ref('v_queue').once('value').then(snapshot => {
         const queue = snapshot.val();
         if (!queue) return;
-
         let opponent = null;
         Object.keys(queue).forEach(key => {
           if (key !== cleanPeerId) opponent = queue[key];
         });
-
         if (opponent) {
           document.getElementById('remote-label').innerText = opponent.name;
           const call = peer.call(opponent.id, localStream);
@@ -767,12 +878,16 @@
     }
 
     function voteVideoOpponent() {
+      triggerHaptic('heavy');
       userElo += 20;
-      coins += 10;
+      coins += 15;
+      addPassXp(60);
+      achievements.video = true;
+      localStorage.setItem('user_achievements', JSON.stringify(achievements));
       localStorage.setItem('user_elo', userElo);
       localStorage.setItem('user_coins', coins);
       updateUI();
-      alert('❤️ Голос отдан в видео-дуэли (+20 ELO)');
+      alert('❤️ Голос отдан (+20 ELO, +60 XP в Pass)');
       startVideoSearch();
     }
   </script>
