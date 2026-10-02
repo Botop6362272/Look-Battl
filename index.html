@@ -1,13 +1,14 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Look Battle MAX - Brawl & CS:GO Edition</title>
+  <title>Look Battle MAX - Live Video Edition</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <!-- Подключаем библиотеку PeerJS для WebRTC Видеочата -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
     body {
@@ -21,7 +22,7 @@
       min-height: 100vh;
     }
 
-    /* Навигационное меню (Brawl Stars style) */
+    /* Нижняя навигация */
     .nav-bar {
       position: fixed;
       bottom: 0;
@@ -57,7 +58,7 @@
       margin-bottom: 75px;
     }
 
-    /* РАМКИ КАРТОЧКИ (Brawl / CS Skins) */
+    /* РАМКИ КАРТОЧКИ */
     .frame-default { border: 4px solid #00f0ff; }
     .frame-100 { border: 4px solid #00ff88 !important; box-shadow: 0 0 15px #00ff88; }
     .frame-200 { border: 4px solid #ffd700 !important; box-shadow: 0 0 20px #ffd700; }
@@ -116,8 +117,9 @@
     }
     .btn-secondary { background: #232838; color: #b4c0d3; box-shadow: none; }
     .btn-stars { background: linear-gradient(135deg, #ffaa00, #ff5500); }
+    .btn-next { background: linear-gradient(135deg, #ff0055, #9900ff); }
 
-    /* Битвы */
+    /* Битвы по фото */
     .battle-container { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 400px; margin-bottom: 75px; }
     .candidate {
       background: #171a26;
@@ -130,7 +132,7 @@
     .candidate img { width: 100%; height: 210px; object-fit: cover; display: block; }
     .candidate-info { padding: 10px; text-align: center; font-size: 15px; font-weight: bold; background: rgba(0,0,0,0.7); }
     .vs-divider { text-align: center; font-size: 22px; font-weight: 900; color: #ff0055; text-shadow: 0 0 10px #ff0055; }
-    
+
     /* Таблица лидеров */
     .leader-row {
       display: flex;
@@ -140,6 +142,39 @@
       padding: 10px 14px;
       border-radius: 10px;
       margin-bottom: 6px;
+    }
+
+    /* ВИДЕОЧАТ ЭКРАН */
+    .video-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      margin-bottom: 12px;
+    }
+    .video-box {
+      position: relative;
+      width: 100%;
+      height: 180px;
+      background: #000;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 2px solid #2c3144;
+    }
+    .video-box video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .video-label {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      background: rgba(0,0,0,0.7);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: bold;
     }
 
     .hidden { display: none !important; }
@@ -178,7 +213,7 @@
     <button class="btn" onclick="switchTab('battle')">⚔️ В БОЙ (DUEL)</button>
   </div>
 
-  <!-- 2. Дуэли (ELO 1v1) -->
+  <!-- 2. Дуэли (по Фото) -->
   <div id="tab-battle" class="battle-container hidden">
     <h3 style="text-align: center; color: #aaa;">Кто выглядит круче?</h3>
     
@@ -195,10 +230,10 @@
     </div>
   </div>
 
-  <!-- 3. Кейсы и Рулетка (Brawl & CS:GO Case Opener) -->
+  <!-- 3. Кейсы -->
   <div id="tab-cases" class="card hidden">
     <h2>📦 Магазин Боксов</h2>
-    <p style="color: #888; font-size: 12px; margin: 8px 0 14px;">Выбивай эксклюзивные скины, рамки и награды!</p>
+    <p style="color: #888; font-size: 12px; margin: 8px 0 14px;">Выбивай эксклюзивные скины и монеты!</p>
     
     <div style="background: #0d0f17; padding: 14px; border-radius: 14px; margin-bottom: 12px; border: 1px solid #2a2e3d;">
       <div style="font-size: 38px;">🎁</div>
@@ -215,7 +250,7 @@
     </div>
   </div>
 
-  <!-- 4. Топ Лидеров (Leaderboard) -->
+  <!-- 4. Топ Лидеров -->
   <div id="tab-top" class="card hidden">
     <h2>🏆 Топ Игроков Мира</h2>
     <p style="color: #888; font-size: 12px; margin-bottom: 14px;">Лучшие луки по версии сообщества</p>
@@ -234,20 +269,30 @@
       <p style="color: #ffd700; font-weight: bold; margin: 6px 0;">10 ⭐ Telegram Stars</p>
       <button class="btn btn-stars" onclick="buyStars(10, 500)">Купить</button>
     </div>
-
-    <div style="background: #0d0f17; padding: 14px; border-radius: 14px; border: 1px solid #a800ff;">
-      <h3>👑 VIP Статус + Рамка Дракона</h3>
-      <p style="color: #a800ff; font-weight: bold; margin: 6px 0;">50 ⭐ Telegram Stars</p>
-      <button class="btn btn-stars" onclick="buyStars(50, 2500)">Купить VIP</button>
-    </div>
   </div>
 
-  <!-- 6. 🎥 Задел под Live Видео Дуэли -->
+  <!-- 6. 🎥 LIVE Видео-Дуэль (Рулетка 1v1) -->
   <div id="tab-video" class="card hidden">
-    <h2>🎥 Live Видео Дуэль 1v1</h2>
-    <p style="color: #888; font-size: 12px; margin: 8px 0 12px;">Сражайся в реальном времени по видеокамере!</p>
-    <video id="webcam-preview" autoplay playsinline style="width: 100%; height: 200px; background: #000; border-radius: 14px; object-fit: cover; border: 2px solid #00f0ff;"></video>
-    <button class="btn" onclick="startVideoMatch()">Поиск соперника по видео</button>
+    <h2>🎥 Live Видео Рулетка 1v1</h2>
+    <p style="color: #888; font-size: 12px; margin: 6px 0 12px;" id="video-status">Нажми "Искать соперника"</p>
+    
+    <div class="video-grid">
+      <!-- Соперник -->
+      <div class="video-box" style="border-color: #ff0055;">
+        <video id="remote-video" autoplay playsinline></video>
+        <div class="video-label" id="remote-name">Соперник</div>
+      </div>
+
+      <!-- Ты -->
+      <div class="video-box" style="border-color: #00f0ff;">
+        <video id="local-video" autoplay playsinline muted></video>
+        <div class="video-label">Вы (Камера)</div>
+      </div>
+    </div>
+
+    <button class="btn" id="find-match-btn" onclick="findVideoMatch()">🔍 ИСКТАТЬ СОПЕРНИКА</button>
+    <button class="btn btn-stars hidden" id="vote-btn" onclick="voteVideoOpponent()">🔥 Отдать голос (+20 ELO)</button>
+    <button class="btn btn-next hidden" id="next-btn" onclick="findVideoMatch()">⏭️ Следующий</button>
   </div>
 
   <!-- Нижнее Меню -->
@@ -314,7 +359,6 @@
         document.getElementById('rank-badge').innerText = '🐣 Новичок';
       }
 
-      // Звания Standoff 2 / CS:GO
       const rankTitle = document.getElementById('rank-title');
       if (userElo >= 600) rankTitle.innerText = '🦅 Gold Eagle';
       else if (userElo >= 400) rankTitle.innerText = '🥇 Gold III';
@@ -334,7 +378,7 @@
 
       if (tabName === 'battle') startBattle();
       if (tabName === 'top') loadLeaderboard();
-      if (tabName === 'video') initWebcam();
+      if (tabName === 'video') initLocalVideo();
     }
 
     function uploadPhoto(event) {
@@ -460,20 +504,53 @@
     }
 
     function buyStars(starsCount, coinsReward) {
-      alert(`Запрос оплаты ${starsCount} ⭐ Telegram Stars.\nПосле интеграции backend вы получите ${coinsReward} монет!`);
+      alert(`Запрос оплаты ${starsCount} ⭐ Telegram Stars.`);
     }
 
-    function initWebcam() {
-      navigator.mediaDevices?.getUserMedia({ video: true }).then(stream => {
-        document.getElementById('webcam-preview').srcObject = stream;
+    /* -------------------------------------------------------------
+       🎥 ЛОГИКА 1v1 WEBRTC ВИДЕОЧАТА (PeerJS + Firebase)
+    ------------------------------------------------------------- */
+    let localStream = null;
+    let peer = null;
+    let currentCall = null;
+    let currentVideoOpponentId = null;
+
+    function initLocalVideo() {
+      if (localStream) return;
+      navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+        localStream = stream;
+        document.getElementById('local-video').srcObject = stream;
+        
+        // Создаем случайный Peer ID
+        peer = new Peer('look_' + userId.replace(/[^a-zA-Z0-9]/g, ''));
+
+        peer.on('call', call => {
+          call.answer(localStream);
+          call.on('stream', remoteStream => {
+            document.getElementById('remote-video').srcObject = remoteStream;
+            document.getElementById('video-status').innerText = '🔥 СОЕДИНЕНО! Голосуй!';
+            showVideoControls(true);
+          });
+          currentCall = call;
+        });
       }).catch(err => {
-        console.log("Камера не доступна");
+        alert('Пожалуйста, разрешите доступ к камере и микрофону');
       });
     }
 
-    function startVideoMatch() {
-      alert("🔍 Поиск соперника по живой видеосвязи...");
-    }
-  </script>
-</body>
-</html>
+    function findVideoMatch() {
+      document.getElementById('video-status').innerText = '🔍 Поиск свободной видео-дуэли...';
+      document.getElementById('find-match-btn').classList.add('hidden');
+      
+      const cleanPeerId = 'look_' + userId.replace(/[^a-zA-Z0-9]/g, '');
+
+      // Регистрируемся в комнате ожидания
+      db.ref('video_queue/' + cleanPeerId).set({
+        peerId: cleanPeerId,
+        name: userName,
+        time: Date.now()
+      });
+
+      // Ищем другого игрока в комнате ожидания
+      db.ref('video_queue').once('value').then(snapshot => {
+        const q
