@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Look Battle MAX - Video Fix</title>
+  <title>Look Battle MAX - Case Roulette Edition</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -153,6 +153,81 @@
 
     .vs-divider { text-align: center; font-size: 22px; font-weight: 900; color: #ff0055; text-shadow: 0 0 10px #ff0055; }
 
+    /* 🎰 РУЛЕТКА КЕЙСОВ */
+    .case-roulette-box {
+      background: #0d0f17;
+      border: 2px solid #ffaa00;
+      border-radius: 16px;
+      padding: 15px;
+      margin-bottom: 12px;
+    }
+    .roulette-window {
+      width: 100%;
+      height: 100px;
+      background: #12141d;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      border: 1px solid #333;
+      margin-bottom: 10px;
+    }
+    .roulette-pointer {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 100%;
+      background: #ff0055;
+      z-index: 10;
+      box-shadow: 0 0 10px #ff0055;
+    }
+    .roulette-track {
+      display: flex;
+      gap: 10px;
+      position: absolute;
+      left: 0;
+      transition: left 4s cubic-bezier(0.15, 0.85, 0.35, 1);
+    }
+    .roulette-item {
+      min-width: 80px;
+      height: 80px;
+      background: #1c2130;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: bold;
+      border: 2px solid #444;
+      padding: 5px;
+      text-align: center;
+    }
+    .rarity-common { border-color: #7f8b9e; color: #b4c0d3; }
+    .rarity-rare { border-color: #00f0ff; color: #00f0ff; }
+    .rarity-epic { border-color: #a800ff; color: #a800ff; }
+    .rarity-legendary { border-color: #ffd700; color: #ffd700; box-shadow: 0 0 10px rgba(255,215,0,0.5); }
+
+    .inventory-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      max-height: 120px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+    .inv-item {
+      background: #0d0f17;
+      border-radius: 8px;
+      padding: 6px;
+      font-size: 10px;
+      text-align: center;
+      border: 1px solid #333;
+    }
+
     .video-grid {
       display: flex;
       flex-direction: column;
@@ -214,7 +289,7 @@
       </div>
       <div>
         <div id="rank-title" class="stat-val" style="color: #ffd700;">Бронза I</div>
-        <div class="stat-lbl">Ранг CS/BS</div>
+        <div class="stat-lbl">Ранг</div>
       </div>
       <div>
         <div id="coins-val" class="stat-val" style="color: #ffaa00;">0</div>
@@ -223,7 +298,7 @@
     </div>
 
     <label class="btn btn-secondary">
-      📷 Сменить фото (ИИ Сканер)
+      📷 Сменить фото профиля
       <input type="file" id="photo-input" accept="image/*" onchange="uploadPhoto(event)">
     </label>
     <button class="btn btn-ai" onclick="switchTab('battle')">🤖 БОЙ ИИ-СУДЬИ</button>
@@ -231,8 +306,8 @@
 
   <!-- 2. ИИ-ДУЭЛЬ -->
   <div id="tab-battle" class="battle-container hidden">
-    <h3 style="text-align: center; color: #aaa;">Основная ИИ-Арена</h3>
-    <p style="text-align: center; font-size: 12px; color: #a800ff; margin-top: -4px;">🤖 Нейросеть сама сравнивает красоту кадра</p>
+    <h3 style="text-align: center; color: #aaa;">ИИ-Арена</h3>
+    <p style="text-align: center; font-size: 12px; color: #a800ff; margin-top: -4px;">🤖 Нейросеть оценивает стиль и качество</p>
 
     <div class="candidate">
       <div class="ai-candidate-score" id="p1-ai">AI: --</div>
@@ -248,10 +323,10 @@
       <div class="candidate-info" id="p2-name">Загрузка...</div>
     </div>
 
-    <button class="btn btn-ai" onclick="runAiBattle()">⚖️ Пусть ИИ выберет победителя</button>
+    <button class="btn btn-ai" onclick="runAiBattle()">⚖️ Запустить ИИ-Оценку</button>
   </div>
 
-  <!-- 3. LIVE ВИДЕО РУЛЕТКА -->
+  <!-- 3. ВИДЕОЧАТ -->
   <div id="tab-video" class="card hidden">
     <h2>🎥 Live Видео Рулетка 1v1</h2>
     <p style="color: #888; font-size: 12px; margin-top: 4px;" id="video-status">Нажми "Искать видео-соперника"</p>
@@ -268,32 +343,37 @@
       </div>
     </div>
 
-    <button class="btn" id="search-v-btn" onclick="startVideoSearch()">🔍 ИСКТАТЬ СОПЕРНИКА</button>
+    <button class="btn" id="search-v-btn" onclick="startVideoSearch()">🔍 ИСКАТЬ СОПЕРНИКА</button>
     <button class="btn btn-stars hidden" id="vote-v-btn" onclick="voteVideoOpponent()">🔥 Отдать голос (+20 ELO)</button>
     <button class="btn btn-secondary hidden" id="next-v-btn" style="margin-top:6px;" onclick="startVideoSearch()">⏭️ Следующий</button>
   </div>
 
-  <!-- 4. Кейсы -->
+  <!-- 4. КЕЙСЫ И РУЛЕТКА -->
   <div id="tab-cases" class="card hidden">
-    <h2>📦 Магазин Боксов</h2>
-    <p style="color: #888; font-size: 12px; margin: 8px 0 14px;">Выбивай эксклюзивные скины и монеты!</p>
+    <h2>📦 Рулетка Кейсов</h2>
+    <p style="color: #888; font-size: 12px; margin: 6px 0 12px;">Крути кейсы за ⭐ Telegram Stars!</p>
     
-    <div style="background: #0d0f17; padding: 14px; border-radius: 14px; margin-bottom: 12px; border: 1px solid #2a2e3d;">
-      <div style="font-size: 38px;">🎁</div>
-      <h3>Бро-Бокс</h3>
-      <p style="color: #7f8b9e; font-size: 11px; margin-bottom: 8px;">Цена: 50 Монет</p>
-      <button class="btn btn-secondary" onclick="openBox(50)">Открыть</button>
+    <div class="case-roulette-box">
+      <h3 style="color: #ffaa00; margin-bottom: 8px;">🎁 Премиум Кейс Look</h3>
+      
+      <!-- Окно рулетки -->
+      <div class="roulette-window">
+        <div class="roulette-pointer"></div>
+        <div class="roulette-track" id="roulette-track">
+          <!-- Динамически заполняется предметами -->
+        </div>
+      </div>
+
+      <button class="btn btn-stars" id="open-case-btn" onclick="openCaseWithStars()">⭐ Открыть за 25 Stars</button>
     </div>
 
-    <div style="background: #0d0f17; padding: 14px; border-radius: 14px; border: 1px solid #ffaa00;">
-      <div style="font-size: 38px;">🧰</div>
-      <h3>CS:GO / Standoff Кейс</h3>
-      <p style="color: #7f8b9e; font-size: 11px; margin-bottom: 8px;">Цена: 150 Монет</p>
-      <button class="btn btn-stars" onclick="openBox(150)">Открыть Кейс</button>
+    <h4 style="text-align: left; font-size: 13px; color: #a800ff; margin-top: 10px;">🎒 Ваш Инвентарь:</h4>
+    <div class="inventory-grid" id="inventory-list">
+      <div style="grid-column: span 3; color: #666; font-size: 11px; padding: 10px;">Пусто. Откройте первый кейс!</div>
     </div>
   </div>
 
-  <!-- 5. Топ -->
+  <!-- 5. ТОП -->
   <div id="tab-top" class="card hidden">
     <h2>🏆 Топ Игроков Мира</h2>
     <p style="color: #888; font-size: 12px; margin-bottom: 14px;">Лучшие дуэлянты по версии ИИ</p>
@@ -341,38 +421,48 @@
     let userElo = parseInt(localStorage.getItem('user_elo')) || 0;
     let coins = parseInt(localStorage.getItem('user_coins')) || 100;
     let myAiScore = parseInt(localStorage.getItem('user_ai_score')) || 75;
+    let inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
+
+    // Возможные призы в кейсе
+    const caseItems = [
+      { name: "Кепка Новичка", rarity: "rarity-common", type: "Обычный", value: 50 },
+      { name: "Неоновые Очки", rarity: "rarity-rare", type: "Редкий", value: 150 },
+      { name: "Худи киберспорт", rarity: "rarity-rare", type: "Редкий", value: 200 },
+      { name: "Золотая цепь", rarity: "rarity-epic", type: "Эпический", value: 500 },
+      { name: "Маска Гигачада", rarity: "rarity-legendary", type: "Легендарный", value: 1500 },
+    ];
 
     function updateUI() {
       document.getElementById('elo-val').innerText = userElo;
       document.getElementById('coins-val').innerText = coins;
       document.getElementById('ai-score-badge').innerText = `🤖 AI Look: ${myAiScore} / 100`;
 
+      // Рендер инвентаря
+      const invContainer = document.getElementById('inventory-list');
+      if (inventory.length === 0) {
+        invContainer.innerHTML = `<div style="grid-column: span 3; color: #666; font-size: 11px; padding: 10px;">Пусто. Откройте кейс!</div>`;
+      } else {
+        invContainer.innerHTML = '';
+        inventory.forEach(item => {
+          invContainer.innerHTML += `<div class="inv-item ${item.rarity}"><b>${item.name}</b><br><span style="font-size:9px">${item.type}</span></div>`;
+        });
+      }
+
       const avatarBox = document.getElementById('avatar-box');
       avatarBox.classList.remove('frame-default', 'frame-100', 'frame-200', 'frame-300', 'frame-500');
 
-      if (userElo >= 500) {
-        avatarBox.classList.add('frame-500');
-        document.getElementById('rank-badge').innerText = '🗿 МЕГА ГИГАЧАД';
-      } else if (userElo >= 300) {
-        avatarBox.classList.add('frame-300');
-        document.getElementById('rank-badge').innerText = '🔥 Огненный Легенда';
-      } else if (userElo >= 200) {
-        avatarBox.classList.add('frame-200');
-        document.getElementById('rank-badge').innerText = '👑 Золотой Босс';
-      } else if (userElo >= 100) {
-        avatarBox.classList.add('frame-100');
-        document.getElementById('rank-badge').innerText = '⚡ Неоновый Бро';
-      } else {
-        avatarBox.classList.add('frame-default');
-        document.getElementById('rank-badge').innerText = '🐣 Новичок';
-      }
+      if (userElo >= 500) avatarBox.classList.add('frame-500');
+      else if (userElo >= 300) avatarBox.classList.add('frame-300');
+      else if (userElo >= 200) avatarBox.classList.add('frame-200');
+      else if (userElo >= 100) avatarBox.classList.add('frame-100');
+      else avatarBox.classList.add('frame-default');
 
       const rankTitle = document.getElementById('rank-title');
-      if (userElo >= 600) rankTitle.innerText = '🦅 Gold Eagle';
-      else if (userElo >= 400) rankTitle.innerText = '🥇 Gold III';
-      else if (userElo >= 250) rankTitle.innerText = '🥈 Silver III';
-      else if (userElo >= 100) rankTitle.innerText = '🥉 Silver I';
-      else rankTitle.innerText = '🥉 Bronze I';
+      if (userElo >= 600) rankTitle.innerText = 'Gold Eagle';
+      else if (userElo >= 400) rankTitle.innerText = 'Gold III';
+      else if (userElo >= 250) rankTitle.innerText = 'Silver III';
+      else if (userElo >= 100) rankTitle.innerText = 'Silver I';
+      else rankTitle.innerText = 'Bronze I';
     }
     updateUI();
 
@@ -393,6 +483,80 @@
       if (tabName === 'battle') startBattle();
       if (tabName === 'top') loadLeaderboard();
       if (tabName === 'video') initLocalCamera();
+      if (tabName === 'cases') initRoulettePreview();
+    }
+
+    // Предзагрузка ленты рулетки
+    function initRoulettePreview() {
+      const track = document.getElementById('roulette-track');
+      track.style.transition = 'none';
+      track.style.left = '0px';
+      track.innerHTML = '';
+      for (let i = 0; i < 20; i++) {
+        let randItem = caseItems[Math.floor(Math.random() * caseItems.length)];
+        track.innerHTML += `<div class="roulette-item ${randItem.rarity}"><span>${randItem.name}</span></div>`;
+      }
+    }
+
+    // ⭐ ОТКРЫТИЕ КЕЙСА ЗА TELEGRAM STARS
+    function openCaseWithStars() {
+      if (tg && tg.openInvoice) {
+        // Запрос реальной оплаты Telegram Stars (25 Звезд)
+        // В продакшене инвойс создается через бэкенд бота (createInvoiceLink)
+        tg.openInvoice("https://t.me/$invoice_link_example", (status) => {
+          if (status === 'paid') {
+            spinRoulette();
+          } else {
+            alert('Оплата отменена');
+          }
+        });
+      } else {
+        // Тестовый режим в браузере без звезд
+        spinRoulette();
+      }
+    }
+
+    // 🎰 АНИМАЦИЯ ПРОКРУТКИ РУЛЕТКИ
+    function spinRoulette() {
+      const track = document.getElementById('roulette-track');
+      const btn = document.getElementById('open-case-btn');
+      btn.disabled = true;
+
+      track.innerHTML = '';
+      let generatedItems = [];
+      
+      // Генерируем 30 элементов для крутки, выигрыш будет на 22-й позиции
+      let winningIndex = 22;
+      let winningItem = null;
+
+      for (let i = 0; i < 30; i++) {
+        let item = caseItems[Math.floor(Math.random() * caseItems.length)];
+        if (i === winningIndex) {
+          // Шанс на легендарку или эпик
+          winningItem = Math.random() < 0.2 ? caseItems[4] : caseItems[Math.floor(Math.random() * 3)];
+          item = winningItem;
+        }
+        generatedItems.push(item);
+        track.innerHTML += `<div class="roulette-item ${item.rarity}"><span>${item.name}</span></div>`;
+      }
+
+      track.style.transition = 'none';
+      track.style.left = '0px';
+
+      setTimeout(() => {
+        // Смещение до центра выпавшего предмета (элемент 80px + gap 10px = 90px)
+        let targetOffset = -(winningIndex * 90 - 140); 
+        track.style.transition = 'left 4s cubic-bezier(0.15, 0.85, 0.35, 1)';
+        track.style.left = targetOffset + 'px';
+      }, 50);
+
+      setTimeout(() => {
+        inventory.push(winningItem);
+        localStorage.setItem('user_inventory', JSON.stringify(inventory));
+        updateUI();
+        alert(`🎉 Поздравляем! Вам выпало:\n${winningItem.name} (${winningItem.type})`);
+        btn.disabled = false;
+      }, 4100);
     }
 
     function analyzeImageBeauty(img) {
@@ -460,9 +624,7 @@
       db.ref('players').once('value').then((snapshot) => {
         const data = snapshot.val();
         allPlayers = [];
-        if (data) {
-          Object.keys(data).forEach(key => allPlayers.push(data[key]));
-        }
+        if (data) Object.keys(data).forEach(key => allPlayers.push(data[key]));
         loadNextPair();
       });
     }
@@ -476,9 +638,7 @@
       } else {
         currentP1 = availablePlayers[Math.floor(Math.random() * availablePlayers.length)];
         let p2Candidate = availablePlayers[Math.floor(Math.random() * availablePlayers.length)];
-        while (currentP1.id === p2Candidate.id) {
-          p2Candidate = availablePlayers[Math.floor(Math.random() * availablePlayers.length)];
-        }
+        while (currentP1.id === p2Candidate.id) p2Candidate = availablePlayers[Math.floor(Math.random() * availablePlayers.length)];
         currentP2 = p2Candidate;
       }
 
@@ -500,11 +660,8 @@
 
       alert(`🤖 ИИ принял решение!\nПобедил: ${winner.name} (${Math.max(score1, score2)}/100)`);
 
-      if (winner.id === userId) {
-        userElo += 20;
-      } else if (loser.id === userId) {
-        userElo = Math.max(0, userElo - 5);
-      }
+      if (winner.id === userId) userElo += 20;
+      else if (loser.id === userId) userElo = Math.max(0, userElo - 5);
 
       if (winner.id && !winner.id.startsWith('user_fake_')) {
         db.ref('players/' + winner.id + '/elo').transaction(c => (c || 0) + 20);
@@ -517,19 +674,6 @@
       if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
       updateUI();
       loadNextPair();
-    }
-
-    function openBox(cost) {
-      if (coins < cost) {
-        alert('Не хватает монет!');
-        return;
-      }
-      coins -= cost;
-      const prizeCoins = Math.floor(Math.random() * 120) + 30;
-      coins += prizeCoins;
-      localStorage.setItem('user_coins', coins);
-      alert(`🎉 Вы открыли кейс!\nВыпало: ${prizeCoins} монет!`);
-      updateUI();
     }
 
     function loadLeaderboard() {
@@ -550,19 +694,12 @@
       });
     }
 
-    /* 🎥 ИСПРАВЛЕННОЕ ВКЛЮЧЕНИЕ КАМЕРЫ */
     let localStream = null;
     let peer = null;
 
     function initLocalCamera() {
       if (localStream) return;
-      
-      const constraints = {
-        video: { facingMode: "user" },
-        audio: false
-      };
-
-      navigator.mediaDevices?.getUserMedia(constraints).then(stream => {
+      navigator.mediaDevices?.getUserMedia({ video: { facingMode: "user" }, audio: false }).then(stream => {
         localStream = stream;
         const localVid = document.getElementById('local-video');
         localVid.srcObject = stream;
@@ -582,7 +719,6 @@
           });
         });
       }).catch(err => {
-        console.error("Ошибка камеры:", err);
         document.getElementById('video-status').innerText = 'Ошибка запуска веб-камеры';
       });
     }
@@ -592,7 +728,6 @@
       document.getElementById('search-v-btn').classList.add('hidden');
       
       const cleanPeerId = 'look_' + userId.replace(/[^a-zA-Z0-9]/g, '');
-
       db.ref('v_queue/' + cleanPeerId).set({ id: cleanPeerId, name: userName });
 
       db.ref('v_queue').once('value').then(snapshot => {
