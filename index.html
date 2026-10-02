@@ -3,12 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Look Battle MAX - Live Video Edition</title>
+  <title>Look Battle MAX - Fixed</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-  <!-- Подключаем библиотеку PeerJS для WebRTC Видеочата -->
-  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
     body {
@@ -22,7 +20,6 @@
       min-height: 100vh;
     }
 
-    /* Нижняя навигация */
     .nav-bar {
       position: fixed;
       bottom: 0;
@@ -58,7 +55,6 @@
       margin-bottom: 75px;
     }
 
-    /* РАМКИ КАРТОЧКИ */
     .frame-default { border: 4px solid #00f0ff; }
     .frame-100 { border: 4px solid #00ff88 !important; box-shadow: 0 0 15px #00ff88; }
     .frame-200 { border: 4px solid #ffd700 !important; box-shadow: 0 0 20px #ffd700; }
@@ -89,6 +85,18 @@
       font-size: 48px;
     }
 
+    .ai-score-badge {
+      background: linear-gradient(135deg, #a800ff, #00f0ff);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 900;
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-bottom: 8px;
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+    }
+
     .stats-container {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
@@ -117,9 +125,8 @@
     }
     .btn-secondary { background: #232838; color: #b4c0d3; box-shadow: none; }
     .btn-stars { background: linear-gradient(135deg, #ffaa00, #ff5500); }
-    .btn-next { background: linear-gradient(135deg, #ff0055, #9900ff); }
+    .btn-ai { background: linear-gradient(135deg, #a800ff, #00f0ff); }
 
-    /* Битвы по фото */
     .battle-container { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 400px; margin-bottom: 75px; }
     .candidate {
       background: #171a26;
@@ -131,9 +138,21 @@
     }
     .candidate img { width: 100%; height: 210px; object-fit: cover; display: block; }
     .candidate-info { padding: 10px; text-align: center; font-size: 15px; font-weight: bold; background: rgba(0,0,0,0.7); }
-    .vs-divider { text-align: center; font-size: 22px; font-weight: 900; color: #ff0055; text-shadow: 0 0 10px #ff0055; }
+    .ai-candidate-score {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.8);
+      border: 1px solid #00f0ff;
+      color: #00f0ff;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 800;
+    }
 
-    /* Таблица лидеров */
+    .vs-divider { text-align: center; font-size: 22px; font-weight: 900; color: #ff0055; text-shadow: 0 0 10px #ff0055; }
+    
     .leader-row {
       display: flex;
       justify-content: space-between;
@@ -144,39 +163,6 @@
       margin-bottom: 6px;
     }
 
-    /* ВИДЕОЧАТ ЭКРАН */
-    .video-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      position: relative;
-      margin-bottom: 12px;
-    }
-    .video-box {
-      position: relative;
-      width: 100%;
-      height: 180px;
-      background: #000;
-      border-radius: 16px;
-      overflow: hidden;
-      border: 2px solid #2c3144;
-    }
-    .video-box video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .video-label {
-      position: absolute;
-      bottom: 8px;
-      left: 8px;
-      background: rgba(0,0,0,0.7);
-      padding: 4px 10px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: bold;
-    }
-
     .hidden { display: none !important; }
     input[type="file"] { display: none; }
   </style>
@@ -185,7 +171,9 @@
 
   <!-- 1. Профиль -->
   <div id="tab-profile" class="card">
-    <div id="rank-badge" style="font-weight: 800; color: #00f0ff; margin-bottom: 6px;">🐣 Новичок</div>
+    <div id="rank-badge" style="font-weight: 800; color: #00f0ff; margin-bottom: 4px;">🐣 Новичок</div>
+    <div id="ai-score-badge" class="ai-score-badge">🤖 AI Look: -- / 100</div>
+    
     <div class="avatar-wrapper">
       <div id="avatar-box" class="avatar frame-default">🗿</div>
     </div>
@@ -213,11 +201,13 @@
     <button class="btn" onclick="switchTab('battle')">⚔️ В БОЙ (DUEL)</button>
   </div>
 
-  <!-- 2. Дуэли (по Фото) -->
+  <!-- 2. Дуэли -->
   <div id="tab-battle" class="battle-container hidden">
     <h3 style="text-align: center; color: #aaa;">Кто выглядит круче?</h3>
-    
+    <p style="text-align: center; font-size: 11px; color: #a800ff; margin-top: -6px;">🤖 AI сканирует стиль и качество кадра</p>
+
     <div class="candidate" onclick="vote(1)">
+      <div class="ai-candidate-score" id="p1-ai">AI: --</div>
       <img id="p1-img" src="" alt="Игрок 1">
       <div class="candidate-info" id="p1-name">Загрузка...</div>
     </div>
@@ -225,9 +215,12 @@
     <div class="vs-divider">VS</div>
 
     <div class="candidate" onclick="vote(2)">
+      <div class="ai-candidate-score" id="p2-ai">AI: --</div>
       <img id="p2-img" src="" alt="Игрок 2">
       <div class="candidate-info" id="p2-name">Загрузка...</div>
     </div>
+
+    <button class="btn btn-ai" onclick="autoAiBattle()">🤖 Пусть ИИ выберет победителя</button>
   </div>
 
   <!-- 3. Кейсы -->
@@ -250,16 +243,16 @@
     </div>
   </div>
 
-  <!-- 4. Топ Лидеров -->
+  <!-- 4. Топ -->
   <div id="tab-top" class="card hidden">
     <h2>🏆 Топ Игроков Мира</h2>
-    <p style="color: #888; font-size: 12px; margin-bottom: 14px;">Лучшие луки по версии сообщества</p>
+    <p style="color: #888; font-size: 12px; margin-bottom: 14px;">Лучшие луки по версии ИИ и Сообщества</p>
     <div id="leaderboard-list">
       <div style="color: #6c7289;">Загрузка топа...</div>
     </div>
   </div>
 
-  <!-- 5. Донат и Stars ⭐ -->
+  <!-- 5. Донат -->
   <div id="tab-shop" class="card hidden">
     <h2>⭐ Магазин Telegram Stars</h2>
     <p style="color: #888; font-size: 12px; margin: 8px 0 14px;">Получай эксклюзивные бонусы за ТГ Звезды</p>
@@ -271,28 +264,11 @@
     </div>
   </div>
 
-  <!-- 6. 🎥 LIVE Видео-Дуэль (Рулетка 1v1) -->
+  <!-- 6. Видео -->
   <div id="tab-video" class="card hidden">
     <h2>🎥 Live Видео Рулетка 1v1</h2>
-    <p style="color: #888; font-size: 12px; margin: 6px 0 12px;" id="video-status">Нажми "Искать соперника"</p>
-    
-    <div class="video-grid">
-      <!-- Соперник -->
-      <div class="video-box" style="border-color: #ff0055;">
-        <video id="remote-video" autoplay playsinline></video>
-        <div class="video-label" id="remote-name">Соперник</div>
-      </div>
-
-      <!-- Ты -->
-      <div class="video-box" style="border-color: #00f0ff;">
-        <video id="local-video" autoplay playsinline muted></video>
-        <div class="video-label">Вы (Камера)</div>
-      </div>
-    </div>
-
-    <button class="btn" id="find-match-btn" onclick="findVideoMatch()">🔍 ИСКТАТЬ СОПЕРНИКА</button>
-    <button class="btn btn-stars hidden" id="vote-btn" onclick="voteVideoOpponent()">🔥 Отдать голос (+20 ELO)</button>
-    <button class="btn btn-next hidden" id="next-btn" onclick="findVideoMatch()">⏭️ Следующий</button>
+    <p style="color: #888; font-size: 12px; margin: 6px 0 12px;">Живые дуэли по камерам</p>
+    <button class="btn" onclick="alert('Режим видео-дуэли в разработке')">🔍 Поиск видео-соперника</button>
   </div>
 
   <!-- Нижнее Меню -->
@@ -334,10 +310,12 @@
 
     let userElo = parseInt(localStorage.getItem('user_elo')) || 0;
     let coins = parseInt(localStorage.getItem('user_coins')) || 100;
+    let myAiScore = parseInt(localStorage.getItem('user_ai_score')) || 75;
 
     function updateUI() {
       document.getElementById('elo-val').innerText = userElo;
       document.getElementById('coins-val').innerText = coins;
+      document.getElementById('ai-score-badge').innerText = `🤖 AI Look: ${myAiScore} / 100`;
 
       const avatarBox = document.getElementById('avatar-box');
       avatarBox.classList.remove('frame-default', 'frame-100', 'frame-200', 'frame-300', 'frame-500');
@@ -370,15 +348,45 @@
 
     function switchTab(tabName) {
       const tabs = ['profile', 'battle', 'cases', 'top', 'shop', 'video'];
-      tabs.forEach(t => document.getElementById('tab-' + t).classList.add('hidden'));
+      tabs.forEach(t => {
+        const el = document.getElementById('tab-' + t);
+        if (el) el.classList.add('hidden');
+      });
       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 
-      document.getElementById('tab-' + tabName).classList.remove('hidden');
-      document.getElementById('nav-' + tabName).classList.add('active');
+      const activeTab = document.getElementById('tab-' + tabName);
+      if (activeTab) activeTab.classList.remove('hidden');
+      
+      const activeNav = document.getElementById('nav-' + tabName);
+      if (activeNav) activeNav.classList.add('active');
 
       if (tabName === 'battle') startBattle();
       if (tabName === 'top') loadLeaderboard();
-      if (tabName === 'video') initLocalVideo();
+    }
+
+    function analyzeImageBeauty(img) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = 100;
+      canvas.height = 100;
+      ctx.drawImage(img, 0, 0, 100, 100);
+
+      const imageData = ctx.getImageData(0, 0, 100, 100).data;
+      let brightness = 0;
+      let colorVariation = 0;
+
+      for (let i = 0; i < imageData.length; i += 4) {
+        const r = imageData[i];
+        const g = imageData[i+1];
+        const b = imageData[i+2];
+        const avg = (r + g + b) / 3;
+        brightness += avg;
+        colorVariation += Math.abs(r - g) + Math.abs(g - b);
+      }
+
+      brightness = brightness / (100 * 100);
+      let score = 50 + (brightness > 80 && brightness < 200 ? 25 : 10) + Math.min(25, Math.floor(colorVariation / 500));
+      return Math.min(99, Math.max(60, Math.floor(score)));
     }
 
     function uploadPhoto(event) {
@@ -400,12 +408,19 @@
           const compressedPhoto = canvas.toDataURL('image/jpeg', 0.6);
           document.getElementById('avatar-box').innerHTML = `<img src="${compressedPhoto}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
 
+          myAiScore = analyzeImageBeauty(img);
+          localStorage.setItem('user_ai_score', myAiScore);
+
           db.ref('players/' + userId).set({
             id: userId,
             name: userName,
             photo: compressedPhoto,
-            elo: userElo
+            elo: userElo,
+            aiScore: myAiScore
           });
+
+          updateUI();
+          alert(`🤖 ИИ проверил фото!\nLook Score: ${myAiScore} / 100`);
         };
       };
       reader.readAsDataURL(file);
@@ -429,8 +444,8 @@
       const availablePlayers = allPlayers.filter(p => p.id !== userId);
 
       if (availablePlayers.length < 2) {
-        currentP1 = { id: userId, name: userName, photo: document.getElementById('avatar-box').querySelector('img')?.src || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400', elo: userElo };
-        currentP2 = { id: 'bot_1', name: 'Соперник (Бот)', photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400', elo: 100 };
+        currentP1 = { id: userId, name: userName, photo: document.getElementById('avatar-box').querySelector('img')?.src || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400', elo: userElo, aiScore: myAiScore };
+        currentP2 = { id: 'bot_1', name: 'Соперник (Бот)', photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400', elo: 100, aiScore: 78 };
       } else {
         currentP1 = availablePlayers[Math.floor(Math.random() * availablePlayers.length)];
         let p2Candidate = availablePlayers[Math.floor(Math.random() * availablePlayers.length)];
@@ -442,8 +457,11 @@
 
       document.getElementById('p1-img').src = currentP1.photo;
       document.getElementById('p1-name').innerText = currentP1.name;
+      document.getElementById('p1-ai').innerText = `AI: ${currentP1.aiScore || 70}/100`;
+
       document.getElementById('p2-img').src = currentP2.photo;
       document.getElementById('p2-name').innerText = currentP2.name;
+      document.getElementById('p2-ai').innerText = `AI: ${currentP2.aiScore || 75}/100`;
     }
 
     function vote(winnerNum) {
@@ -472,6 +490,19 @@
       loadNextPair();
     }
 
+    function autoAiBattle() {
+      const score1 = currentP1.aiScore || 70;
+      const score2 = currentP2.aiScore || 75;
+
+      if (score1 >= score2) {
+        alert(`🤖 ИИ выбрал ${currentP1.name}! (${score1} vs ${score2})`);
+        vote(1);
+      } else {
+        alert(`🤖 ИИ выбрал ${currentP2.name}! (${score2} vs ${score1})`);
+        vote(2);
+      }
+    }
+
     function openBox(cost) {
       if (coins < cost) {
         alert('Не хватает монет! Голосуй в дуэлях.');
@@ -496,7 +527,7 @@
         playersArr.forEach((p, idx) => {
           listElem.innerHTML += `
             <div class="leader-row">
-              <div><b>#${idx + 1}</b> ${p.name}</div>
+              <div><b>#${idx + 1}</b> ${p.name} <small style="color:#a800ff;">(AI: ${p.aiScore || 70})</small></div>
               <div style="color:#00f0ff; font-weight:bold;">${p.elo} ELO</div>
             </div>`;
         });
@@ -506,51 +537,6 @@
     function buyStars(starsCount, coinsReward) {
       alert(`Запрос оплаты ${starsCount} ⭐ Telegram Stars.`);
     }
-
-    /* -------------------------------------------------------------
-       🎥 ЛОГИКА 1v1 WEBRTC ВИДЕОЧАТА (PeerJS + Firebase)
-    ------------------------------------------------------------- */
-    let localStream = null;
-    let peer = null;
-    let currentCall = null;
-    let currentVideoOpponentId = null;
-
-    function initLocalVideo() {
-      if (localStream) return;
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
-        localStream = stream;
-        document.getElementById('local-video').srcObject = stream;
-        
-        // Создаем случайный Peer ID
-        peer = new Peer('look_' + userId.replace(/[^a-zA-Z0-9]/g, ''));
-
-        peer.on('call', call => {
-          call.answer(localStream);
-          call.on('stream', remoteStream => {
-            document.getElementById('remote-video').srcObject = remoteStream;
-            document.getElementById('video-status').innerText = '🔥 СОЕДИНЕНО! Голосуй!';
-            showVideoControls(true);
-          });
-          currentCall = call;
-        });
-      }).catch(err => {
-        alert('Пожалуйста, разрешите доступ к камере и микрофону');
-      });
-    }
-
-    function findVideoMatch() {
-      document.getElementById('video-status').innerText = '🔍 Поиск свободной видео-дуэли...';
-      document.getElementById('find-match-btn').classList.add('hidden');
-      
-      const cleanPeerId = 'look_' + userId.replace(/[^a-zA-Z0-9]/g, '');
-
-      // Регистрируемся в комнате ожидания
-      db.ref('video_queue/' + cleanPeerId).set({
-        peerId: cleanPeerId,
-        name: userName,
-        time: Date.now()
-      });
-
-      // Ищем другого игрока в комнате ожидания
-      db.ref('video_queue').once('value').then(snapshot => {
-        const q
+  </script>
+</body>
+</html>
