@@ -1,142 +1,266 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Look Battle</title>
+  <title>Look Battle MAX - Brawl & CS:GO Edition</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
     body {
-      background-color: #0b0c10;
+      background: #090a0f;
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      padding: 16px;
+      padding: 10px;
       display: flex;
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
     }
-    .card {
-      background: #1f2833;
-      border-radius: 20px;
-      padding: 24px 20px;
+
+    /* Навигационное меню (Brawl Stars style) */
+    .nav-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
       width: 100%;
-      max-width: 380px;
+      background: #12141d;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0;
+      border-top: 2px solid #2a2e3d;
+      z-index: 1000;
+    }
+    .nav-item {
+      color: #6c7289;
+      font-size: 11px;
+      font-weight: bold;
       text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-      border: 1px solid #333;
+      cursor: pointer;
+      flex: 1;
     }
-    .gigachad-glow {
-      border: 2px solid #ffd700 !important;
-      box-shadow: 0 0 25px rgba(255, 215, 0, 0.6) !important;
+    .nav-item.active { color: #00f0ff; text-shadow: 0 0 10px rgba(0,240,255,0.5); }
+    .nav-item span { font-size: 20px; display: block; margin-bottom: 2px; }
+
+    .card {
+      background: #171a26;
+      border-radius: 20px;
+      padding: 18px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      border: 1px solid #2c3144;
+      margin-bottom: 75px;
     }
+
+    /* РАМКИ КАРТОЧКИ (Brawl / CS Skins) */
+    .frame-default { border: 4px solid #00f0ff; }
+    .frame-100 { border: 4px solid #00ff88 !important; box-shadow: 0 0 15px #00ff88; }
+    .frame-200 { border: 4px solid #ffd700 !important; box-shadow: 0 0 20px #ffd700; }
+    .frame-300 { border: 4px solid #ff0055 !important; box-shadow: 0 0 25px #ff0055; animation: pulse 1.5s infinite; }
+    .frame-500 { border: 4px solid #a800ff !important; box-shadow: 0 0 35px #a800ff; animation: pulse 0.8s infinite; }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 10px #ff0055; }
+      50% { box-shadow: 0 0 25px #ff0055; }
+      100% { box-shadow: 0 0 10px #ff0055; }
+    }
+
     .avatar-wrapper {
       position: relative;
-      width: 130px;
-      height: 130px;
-      margin: 0 auto 15px;
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 10px;
     }
     .avatar {
       width: 100%;
       height: 100%;
       border-radius: 50%;
       object-fit: cover;
-      border: 4px solid #45f3ff;
-      background: #0b0c10;
+      background: #090a0f;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 48px;
     }
-    .rank-badge {
-      font-size: 14px;
-      font-weight: 800;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      padding: 6px 14px;
-      border-radius: 20px;
-      background: #252a34;
-      display: inline-block;
-      margin-bottom: 8px;
-      color: #45f3ff;
+
+    .stats-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+      background: #0d0f17;
+      padding: 10px;
+      border-radius: 14px;
+      margin: 12px 0;
+      border: 1px solid #252a3b;
     }
-    .gigachad-badge {
-      background: linear-gradient(45deg, #ff0055, #ffdd00);
-      color: #000;
-    }
-    .elo-display { font-size: 32px; font-weight: 900; margin-bottom: 15px; }
-    .elo-val { color: #45f3ff; }
+    .stat-val { font-size: 16px; font-weight: 900; color: #00f0ff; }
+    .stat-lbl { font-size: 10px; color: #7f8b9e; text-transform: uppercase; margin-top: 2px; }
+
     .btn {
-      background: linear-gradient(135deg, #45f3ff, #ff0055);
+      background: linear-gradient(135deg, #00f0ff, #ff0055);
       border: none;
       color: white;
-      padding: 16px;
+      padding: 14px;
       border-radius: 14px;
-      font-size: 17px;
+      font-size: 15px;
       font-weight: 800;
       width: 100%;
       cursor: pointer;
-      margin-top: 10px;
+      margin-top: 8px;
+      box-shadow: 0 4px 15px rgba(255,0,85,0.3);
     }
-    .btn-secondary { background: #2b2e3a; color: #ccc; font-size: 15px; }
-    .battle-container { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 380px; }
+    .btn-secondary { background: #232838; color: #b4c0d3; box-shadow: none; }
+    .btn-stars { background: linear-gradient(135deg, #ffaa00, #ff5500); }
+
+    /* Битвы */
+    .battle-container { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 400px; margin-bottom: 75px; }
     .candidate {
-      background: #1f2833;
+      background: #171a26;
       border-radius: 18px;
       overflow: hidden;
       cursor: pointer;
+      position: relative;
+      border: 2px solid #2c3144;
     }
-    .candidate img { width: 100%; height: 240px; object-fit: cover; display: block; }
-    .candidate-info { padding: 12px; text-align: center; font-size: 16px; font-weight: bold; background: rgba(0,0,0,0.4); }
-    .vs-divider { text-align: center; font-size: 22px; font-weight: 900; color: #ff0055; }
+    .candidate img { width: 100%; height: 210px; object-fit: cover; display: block; }
+    .candidate-info { padding: 10px; text-align: center; font-size: 15px; font-weight: bold; background: rgba(0,0,0,0.7); }
+    .vs-divider { text-align: center; font-size: 22px; font-weight: 900; color: #ff0055; text-shadow: 0 0 10px #ff0055; }
+    
+    /* Таблица лидеров */
+    .leader-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0d0f17;
+      padding: 10px 14px;
+      border-radius: 10px;
+      margin-bottom: 6px;
+    }
+
     .hidden { display: none !important; }
     input[type="file"] { display: none; }
   </style>
 </head>
 <body>
 
-  <!-- Профиль -->
-  <div id="profile-screen" class="card">
-    <div id="rank-badge" class="rank-badge">🐣 Новичок</div>
+  <!-- 1. Профиль -->
+  <div id="tab-profile" class="card">
+    <div id="rank-badge" style="font-weight: 800; color: #00f0ff; margin-bottom: 6px;">🐣 Новичок</div>
     <div class="avatar-wrapper">
-      <div id="avatar-box" class="avatar">🗿</div>
+      <div id="avatar-box" class="avatar frame-default">🗿</div>
     </div>
-    <h2 id="username" style="margin-bottom: 6px;">Игрок</h2>
-    <div class="elo-display"><span id="elo-val" class="elo-val">0</span> <span style="font-size: 18px; color: #888;">ELO</span></div>
+    <h2 id="username">Игрок</h2>
     
+    <div class="stats-container">
+      <div>
+        <div id="elo-val" class="stat-val">0</div>
+        <div class="stat-lbl">ELO</div>
+      </div>
+      <div>
+        <div id="rank-title" class="stat-val" style="color: #ffd700;">Бронза I</div>
+        <div class="stat-lbl">Ранг CS/BS</div>
+      </div>
+      <div>
+        <div id="coins-val" class="stat-val" style="color: #ffaa00;">0</div>
+        <div class="stat-lbl">Монеты</div>
+      </div>
+    </div>
+
     <label class="btn btn-secondary">
-      📷 Загрузить своё фото в Баттл
+      📷 Сменить фото
       <input type="file" id="photo-input" accept="image/*" onchange="uploadPhoto(event)">
     </label>
-    
-    <button class="btn" onclick="startBattle()">🔥 ИСКАТЬ ДУЭЛЬ</button>
+    <button class="btn" onclick="switchTab('battle')">⚔️ В БОЙ (DUEL)</button>
   </div>
 
-  <!-- Баттл -->
-  <div id="battle-screen" class="battle-container hidden">
-    <h3 style="text-align: center; color: #aaa;">Кто выглядит лучше?</h3>
+  <!-- 2. Дуэли (ELO 1v1) -->
+  <div id="tab-battle" class="battle-container hidden">
+    <h3 style="text-align: center; color: #aaa;">Кто выглядит круче?</h3>
     
     <div class="candidate" onclick="vote(1)">
-      <img id="p1-img" src="" alt="Участник 1">
+      <img id="p1-img" src="" alt="Игрок 1">
       <div class="candidate-info" id="p1-name">Загрузка...</div>
     </div>
 
     <div class="vs-divider">VS</div>
 
     <div class="candidate" onclick="vote(2)">
-      <img id="p2-img" src="" alt="Участник 2">
+      <img id="p2-img" src="" alt="Игрок 2">
       <div class="candidate-info" id="p2-name">Загрузка...</div>
     </div>
+  </div>
 
-    <button class="btn btn-secondary" onclick="showProfile()">⬅ В профиль</button>
+  <!-- 3. Кейсы и Рулетка (Brawl & CS:GO Case Opener) -->
+  <div id="tab-cases" class="card hidden">
+    <h2>📦 Магазин Боксов</h2>
+    <p style="color: #888; font-size: 12px; margin: 8px 0 14px;">Выбивай эксклюзивные скины, рамки и награды!</p>
+    
+    <div style="background: #0d0f17; padding: 14px; border-radius: 14px; margin-bottom: 12px; border: 1px solid #2a2e3d;">
+      <div style="font-size: 38px;">🎁</div>
+      <h3>Бро-Бокс</h3>
+      <p style="color: #7f8b9e; font-size: 11px; margin-bottom: 8px;">Цена: 50 Монет</p>
+      <button class="btn btn-secondary" onclick="openBox(50)">Открыть</button>
+    </div>
+
+    <div style="background: #0d0f17; padding: 14px; border-radius: 14px; border: 1px solid #ffaa00;">
+      <div style="font-size: 38px;">🧰</div>
+      <h3>CS:GO / Standoff Кейс</h3>
+      <p style="color: #7f8b9e; font-size: 11px; margin-bottom: 8px;">Цена: 150 Монет</p>
+      <button class="btn btn-stars" onclick="openBox(150)">Открыть Кейс</button>
+    </div>
+  </div>
+
+  <!-- 4. Топ Лидеров (Leaderboard) -->
+  <div id="tab-top" class="card hidden">
+    <h2>🏆 Топ Игроков Мира</h2>
+    <p style="color: #888; font-size: 12px; margin-bottom: 14px;">Лучшие луки по версии сообщества</p>
+    <div id="leaderboard-list">
+      <div style="color: #6c7289;">Загрузка топа...</div>
+    </div>
+  </div>
+
+  <!-- 5. Донат и Stars ⭐ -->
+  <div id="tab-shop" class="card hidden">
+    <h2>⭐ Магазин Telegram Stars</h2>
+    <p style="color: #888; font-size: 12px; margin: 8px 0 14px;">Получай эксклюзивные бонусы за ТГ Звезды</p>
+    
+    <div style="background: #0d0f17; padding: 14px; border-radius: 14px; margin-bottom: 10px; border: 1px solid #ffd700;">
+      <h3>💰 500 Монет</h3>
+      <p style="color: #ffd700; font-weight: bold; margin: 6px 0;">10 ⭐ Telegram Stars</p>
+      <button class="btn btn-stars" onclick="buyStars(10, 500)">Купить</button>
+    </div>
+
+    <div style="background: #0d0f17; padding: 14px; border-radius: 14px; border: 1px solid #a800ff;">
+      <h3>👑 VIP Статус + Рамка Дракона</h3>
+      <p style="color: #a800ff; font-weight: bold; margin: 6px 0;">50 ⭐ Telegram Stars</p>
+      <button class="btn btn-stars" onclick="buyStars(50, 2500)">Купить VIP</button>
+    </div>
+  </div>
+
+  <!-- 6. 🎥 Задел под Live Видео Дуэли -->
+  <div id="tab-video" class="card hidden">
+    <h2>🎥 Live Видео Дуэль 1v1</h2>
+    <p style="color: #888; font-size: 12px; margin: 8px 0 12px;">Сражайся в реальном времени по видеокамере!</p>
+    <video id="webcam-preview" autoplay playsinline style="width: 100%; height: 200px; background: #000; border-radius: 14px; object-fit: cover; border: 2px solid #00f0ff;"></video>
+    <button class="btn" onclick="startVideoMatch()">Поиск соперника по видео</button>
+  </div>
+
+  <!-- Нижнее Меню -->
+  <div class="nav-bar">
+    <div class="nav-item active" id="nav-profile" onclick="switchTab('profile')"><span>👤</span>Профиль</div>
+    <div class="nav-item" id="nav-battle" onclick="switchTab('battle')"><span>⚔️</span>Дуэли</div>
+    <div class="nav-item" id="nav-cases" onclick="switchTab('cases')"><span>📦</span>Кейсы</div>
+    <div class="nav-item" id="nav-top" onclick="switchTab('top')"><span>🏆</span>Топ</div>
+    <div class="nav-item" id="nav-shop" onclick="switchTab('shop')"><span>⭐</span>Донат</div>
+    <div class="nav-item" id="nav-video" onclick="switchTab('video')"><span>🎥</span>Видео</div>
   </div>
 
   <script>
-    // Инициализация Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDFLdpNyVPtYlrjHsuyJ_TSI8DZSMqy-EM",
       authDomain: "jsh737-c4bb3.firebaseapp.com",
@@ -149,8 +273,8 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-
     const tg = window.Telegram?.WebApp;
+
     let userId = 'user_' + Math.floor(Math.random() * 1000000);
     let userName = 'Игрок';
 
@@ -164,26 +288,55 @@
     document.getElementById('username').innerText = userName;
 
     let userElo = parseInt(localStorage.getItem('user_elo')) || 0;
+    let coins = parseInt(localStorage.getItem('user_coins')) || 100;
 
-    function updateRankDisplay() {
-      const eloElem = document.getElementById('elo-val');
-      const badgeElem = document.getElementById('rank-badge');
-      const cardElem = document.getElementById('profile-screen');
-      eloElem.innerText = userElo;
+    function updateUI() {
+      document.getElementById('elo-val').innerText = userElo;
+      document.getElementById('coins-val').innerText = coins;
 
-      if (userElo >= 3000) {
-        badgeElem.innerText = '🗿 МЕГА ГИГАЧАД';
-        badgeElem.classList.add('gigachad-badge');
-        cardElem.classList.add('gigachad-glow');
-      } else if (userElo >= 2000) { badgeElem.innerText = '🔥 Легенда'; }
-      else if (userElo >= 1000) { badgeElem.innerText = '⚡ Гигачад'; }
-      else if (userElo >= 600) { badgeElem.innerText = '👑 Красавчик'; }
-      else if (userElo >= 300) { badgeElem.innerText = '🔥 Опыт'; }
-      else { badgeElem.innerText = '🐣 Новичок'; }
+      const avatarBox = document.getElementById('avatar-box');
+      avatarBox.classList.remove('frame-default', 'frame-100', 'frame-200', 'frame-300', 'frame-500');
+
+      if (userElo >= 500) {
+        avatarBox.classList.add('frame-500');
+        document.getElementById('rank-badge').innerText = '🗿 МЕГА ГИГАЧАД';
+      } else if (userElo >= 300) {
+        avatarBox.classList.add('frame-300');
+        document.getElementById('rank-badge').innerText = '🔥 Огненный Легенда';
+      } else if (userElo >= 200) {
+        avatarBox.classList.add('frame-200');
+        document.getElementById('rank-badge').innerText = '👑 Золотой Босс';
+      } else if (userElo >= 100) {
+        avatarBox.classList.add('frame-100');
+        document.getElementById('rank-badge').innerText = '⚡ Неоновый Бро';
+      } else {
+        avatarBox.classList.add('frame-default');
+        document.getElementById('rank-badge').innerText = '🐣 Новичок';
+      }
+
+      // Звания Standoff 2 / CS:GO
+      const rankTitle = document.getElementById('rank-title');
+      if (userElo >= 600) rankTitle.innerText = '🦅 Gold Eagle';
+      else if (userElo >= 400) rankTitle.innerText = '🥇 Gold III';
+      else if (userElo >= 250) rankTitle.innerText = '🥈 Silver III';
+      else if (userElo >= 100) rankTitle.innerText = '🥉 Silver I';
+      else rankTitle.innerText = '🥉 Bronze I';
     }
-    updateRankDisplay();
+    updateUI();
 
-    // Загрузка фото в общую базу
+    function switchTab(tabName) {
+      const tabs = ['profile', 'battle', 'cases', 'top', 'shop', 'video'];
+      tabs.forEach(t => document.getElementById('tab-' + t).classList.add('hidden'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+      document.getElementById('tab-' + tabName).classList.remove('hidden');
+      document.getElementById('nav-' + tabName).classList.add('active');
+
+      if (tabName === 'battle') startBattle();
+      if (tabName === 'top') loadLeaderboard();
+      if (tabName === 'video') initWebcam();
+    }
+
     function uploadPhoto(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -203,8 +356,8 @@
           const compressedPhoto = canvas.toDataURL('image/jpeg', 0.6);
           document.getElementById('avatar-box').innerHTML = `<img src="${compressedPhoto}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
 
-          // Отправка в общую базу данных Firebase
           db.ref('players/' + userId).set({
+            id: userId,
             name: userName,
             photo: compressedPhoto,
             elo: userElo
@@ -215,58 +368,111 @@
     }
 
     let allPlayers = [];
+    let currentP1 = null, currentP2 = null;
 
     function startBattle() {
-      document.getElementById('profile-screen').classList.add('hidden');
-      document.getElementById('battle-screen').classList.remove('hidden');
-
-      // Получение всех реальных игроков из Firebase
       db.ref('players').once('value').then((snapshot) => {
         const data = snapshot.val();
         allPlayers = [];
         if (data) {
-          Object.keys(data).forEach(key => {
-            allPlayers.push(data[key]);
-          });
+          Object.keys(data).forEach(key => allPlayers.push(data[key]));
         }
         loadNextPair();
       });
     }
 
-    function showProfile() {
-      document.getElementById('battle-screen').classList.add('hidden');
-      document.getElementById('profile-screen').classList.remove('hidden');
-      updateRankDisplay();
+    function loadNextPair() {
+      const availablePlayers = allPlayers.filter(p => p.id !== userId);
+
+      if (availablePlayers.length < 2) {
+        currentP1 = { id: userId, name: userName, photo: document.getElementById('avatar-box').querySelector('img')?.src || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400', elo: userElo };
+        currentP2 = { id: 'bot_1', name: 'Соперник (Бот)', photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400', elo: 100 };
+      } else {
+        currentP1 = availablePlayers[Math.floor(Math.random() * availablePlayers.length)];
+        let p2Candidate = availablePlayers[Math.floor(Math.random() * availablePlayers.length)];
+        while (currentP1.id === p2Candidate.id) {
+          p2Candidate = availablePlayers[Math.floor(Math.random() * availablePlayers.length)];
+        }
+        currentP2 = p2Candidate;
+      }
+
+      document.getElementById('p1-img').src = currentP1.photo;
+      document.getElementById('p1-name').innerText = currentP1.name;
+      document.getElementById('p2-img').src = currentP2.photo;
+      document.getElementById('p2-name').innerText = currentP2.name;
     }
 
-    function loadNextPair() {
-      if (allPlayers.length < 2) {
-        // Если реальных игроков мало, добавляем заглушку
-        document.getElementById('p1-name').innerText = userName;
-        document.getElementById('p1-img').src = document.getElementById('avatar-box').querySelector('img')?.src || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400';
-        
-        document.getElementById('p2-name').innerText = 'Игрок #2';
-        document.getElementById('p2-img').src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400';
+    function vote(winnerNum) {
+      const winner = winnerNum === 1 ? currentP1 : currentP2;
+      const loser = winnerNum === 1 ? currentP2 : currentP1;
+
+      if (winner.id === userId) {
+        userElo += 20;
+      } else if (loser.id === userId) {
+        userElo = Math.max(0, userElo - 5);
+      }
+
+      if (winner.id && !winner.id.startsWith('bot_')) {
+        db.ref('players/' + winner.id + '/elo').transaction(c => (c || 0) + 20);
+      }
+      if (loser.id && !loser.id.startsWith('bot_')) {
+        db.ref('players/' + loser.id + '/elo').transaction(c => Math.max(0, (c || 0) - 5));
+      }
+
+      coins += 5;
+      localStorage.setItem('user_elo', userElo);
+      localStorage.setItem('user_coins', coins);
+
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+      updateUI();
+      loadNextPair();
+    }
+
+    function openBox(cost) {
+      if (coins < cost) {
+        alert('Не хватает монет! Голосуй в дуэлях.');
         return;
       }
-
-      const p1 = allPlayers[Math.floor(Math.random() * allPlayers.length)];
-      let p2 = allPlayers[Math.floor(Math.random() * allPlayers.length)];
-      while (p1 === p2) {
-        p2 = allPlayers[Math.floor(Math.random() * allPlayers.length)];
-      }
-
-      document.getElementById('p1-img').src = p1.photo;
-      document.getElementById('p1-name').innerText = p1.name;
-      document.getElementById('p2-img').src = p2.photo;
-      document.getElementById('p2-name').innerText = p2.name;
+      coins -= cost;
+      const prizeCoins = Math.floor(Math.random() * 120) + 30;
+      coins += prizeCoins;
+      localStorage.setItem('user_coins', coins);
+      alert(`🎉 Вы открыли кейс!\nВыпало: ${prizeCoins} монет!`);
+      updateUI();
     }
 
-    function vote(candidateNumber) {
-      userElo += 15;
-      localStorage.setItem('user_elo', userElo);
-      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-      loadNextPair();
+    function loadLeaderboard() {
+      db.ref('players').orderByChild('elo').limitToLast(10).once('value').then(snapshot => {
+        const data = snapshot.val();
+        const listElem = document.getElementById('leaderboard-list');
+        listElem.innerHTML = '';
+        if (!data) return;
+
+        const playersArr = Object.values(data).sort((a,b) => b.elo - a.elo);
+        playersArr.forEach((p, idx) => {
+          listElem.innerHTML += `
+            <div class="leader-row">
+              <div><b>#${idx + 1}</b> ${p.name}</div>
+              <div style="color:#00f0ff; font-weight:bold;">${p.elo} ELO</div>
+            </div>`;
+        });
+      });
+    }
+
+    function buyStars(starsCount, coinsReward) {
+      alert(`Запрос оплаты ${starsCount} ⭐ Telegram Stars.\nПосле интеграции backend вы получите ${coinsReward} монет!`);
+    }
+
+    function initWebcam() {
+      navigator.mediaDevices?.getUserMedia({ video: true }).then(stream => {
+        document.getElementById('webcam-preview').srcObject = stream;
+      }).catch(err => {
+        console.log("Камера не доступна");
+      });
+    }
+
+    function startVideoMatch() {
+      alert("🔍 Поиск соперника по живой видеосвязи...");
     }
   </script>
 </body>
